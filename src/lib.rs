@@ -1,35 +1,58 @@
-struct NoneState;
-
+pub struct TopState;
 mod Sealed{
   
 }
 
-pub trait State<T: StateMachine>{
-    fn init(sm : &mut T);
+pub trait State<T: CoreStateMachine>{
+    type ParentState;
 
-    fn entry(sm: &mut T);
+    fn init(data : &mut T::Data);
 
-    fn exit(sm : &mut T);
+    fn entry(data: &mut T::Data);
 
-    fn handle(sm : &mut T, evt: T::Evt);
+    fn exit(data : &mut T::Data);
+
+    fn handle(data : &mut T::Data, evt: T::Evt);
     
-    fn core_handle(sm : &mut T, evt: CoreEvt<T::Evt>){
+    fn core_handle(data : &mut T::Data, evt: CoreEvt<T::Evt>){
 
     }
 }
 //Todo delete pub
-pub enum CoreEvt<USER_EVT_T>{
+pub enum CoreEvt<UserEvtT>{
     Init,
     Entry,
     Exit,
-    User{user_evt : USER_EVT_T}
+    User{user_evt : UserEvtT}
 }
 
-pub trait StateMachine{
+pub trait CoreStateMachine{
     type Evt;
-    fn dispatch(&mut self, evt : CoreEvt<Self::Evt>){}
-    //fn get_curr_state(&mut self) -> fn(&mut StateMachine, evt: Self::Evt);
+    type Data;
 }
+
+impl <DataT, UserEvtT> CoreStateMachine for StateMachine<DataT, UserEvtT>{
+   type Evt = UserEvtT;
+   type Data = DataT;
+}
+
+pub struct StateMachine<DataT, UserEvtT>{
+    current_state : fn(&mut DataT, evt: CoreEvt<UserEvtT>),
+    data : DataT
+}
+
+impl <DataT, UserEvt>StateMachine<DataT, UserEvt>{
+    
+    pub fn new<EntryState: State<Self>>(data : DataT) -> StateMachine<DataT, UserEvt>{
+        StateMachine{current_state: EntryState::core_handle, data}
+    }
+
+    pub fn dispatch(&mut self, evt : CoreEvt<UserEvt>){
+
+    }
+
+}
+
 
 #[cfg(test)]
 mod tests {
