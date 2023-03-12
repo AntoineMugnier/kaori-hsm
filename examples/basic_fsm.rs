@@ -7,53 +7,59 @@ enum BasicEvt{
 
 }
 
-struct BasicData{}
+struct BasicStateMachine{}
 
-type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
+//type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
-struct S1{} impl State<BasicStateMachine> for S1{
-    type ParentState = TopState;
-    fn init(data : &mut BasicData) {
+impl TopState for BasicStateMachine{
+    type Evt = BasicEvt;
+
+    fn init(&mut self) {
+    
+    }
+}
+
+struct S1{} impl State<S1> for BasicStateMachine{
+
+    type ParentState = Self;
+    fn init(&mut self) {
     
     }
 
-    fn exit(data : &mut BasicData) {
+    fn exit(&mut self) {
     
     }
 
-    fn entry(data: &mut BasicData) {
+    fn entry(&mut self) {
     
     }
 
-    fn handle(data : &mut BasicData, evt: BasicEvt) {
+    fn handle(&mut self, evt: BasicEvt) {
     
     }    
 }
 
-struct S2{} impl State<BasicStateMachine> for S2{
+struct S2{} impl State<S2> for BasicStateMachine{
     
     type ParentState = S1;
 
-    fn init(data : &mut BasicData) {
+    fn init(&mut self) {
     
     }
 
-    fn exit(data : &mut BasicData) {
+    fn exit(&mut self) {
     
     }
 
-    fn entry(data: &mut BasicData) {
+    fn entry(&mut self) {
     
    }
-    fn handle(data : &mut BasicData, evt: BasicEvt) {
+    fn handle(&mut self, evt: BasicEvt) {
     
     }    
 }
 
 fn main(){
     println!("Hello");
-    let data = BasicData{};
-    let bsm = BasicStateMachine::new::<S1>(data);
-
 
 }

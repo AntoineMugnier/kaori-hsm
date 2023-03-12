@@ -1,23 +1,37 @@
-pub struct TopState;
-mod Sealed{
+use std::marker::PhantomData;
+
+
+mod sealed{
   
 }
+pub trait TopState
+{
+    type Evt;
+    fn init(&mut self);
+}
 
-pub trait State<T: CoreStateMachine>{
-    type ParentState;
-
-    fn init(data : &mut T::Data);
-
-    fn entry(data: &mut T::Data);
-
-    fn exit(data : &mut T::Data);
-
-    fn handle(data : &mut T::Data, evt: T::Evt);
+pub trait State<T>
+where Self : TopState{
+    type ParentState ;
     
-    fn core_handle(data : &mut T::Data, evt: CoreEvt<T::Evt>){
+    fn init(&mut self);
 
+    fn entry(&mut self);
+
+    fn exit(&mut self);
+
+    fn handle(&mut self, evt: <Self as TopState>::Evt);
+    
+    fn core_handle(&mut self, evt: CoreEvt::<<Self as TopState>::Evt>){
+        match evt{
+            CoreEvt::Init => <Self as State<T>>::init(self),
+            CoreEvt::Entry => <Self as State<T>>::entry(self),
+            CoreEvt::Exit => <Self as State<T>>::exit(self),
+            CoreEvt::User { user_evt } => <Self as State<T>>::handle(self, user_evt),
+        }
     }
 }
+
 //Todo delete pub
 pub enum CoreEvt<UserEvtT>{
     Init,
@@ -26,28 +40,17 @@ pub enum CoreEvt<UserEvtT>{
     User{user_evt : UserEvtT}
 }
 
-pub trait CoreStateMachine{
-    type Evt;
-    type Data;
+pub struct StateMachine<UserStateMachine>{
+    user_state_machine : UserStateMachine
 }
 
-impl <DataT, UserEvtT> CoreStateMachine for StateMachine<DataT, UserEvtT>{
-   type Evt = UserEvtT;
-   type Data = DataT;
-}
-
-pub struct StateMachine<DataT, UserEvtT>{
-    current_state : fn(&mut DataT, evt: CoreEvt<UserEvtT>),
-    data : DataT
-}
-
-impl <DataT, UserEvt>StateMachine<DataT, UserEvt>{
+impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
     
-    pub fn new<EntryState: State<Self>>(data : DataT) -> StateMachine<DataT, UserEvt>{
-        StateMachine{current_state: EntryState::core_handle, data}
+    pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
+        StateMachine{user_state_machine}
     }
 
-    pub fn dispatch(&mut self, evt : CoreEvt<UserEvt>){
+    pub fn dispatch(&mut self, evt : CoreEvt<<UserStateMachine as TopState>::Evt>){
 
     }
 
