@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 
 mod sealed{
   
@@ -10,9 +8,24 @@ pub trait TopState
     fn init(&mut self);
 }
 
+type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, CoreEvt<<UserStateMachineT as TopState>::Evt>) -> HandleResult<UserStateMachineT>;
+
+pub struct Top{}
+
+pub enum HandleResult<UserStateMachineT: TopState + ?Sized>{
+    Ignored(StateFn<UserStateMachineT>),
+    Handled,
+    Transition(StateFn<UserStateMachineT>),
+}
+
 pub trait State<T>
 where Self : TopState{
     type ParentState ;
+    
+    fn transition<StateT>() -> HandleResult<Self>
+    where Self: State<StateT> {
+      HandleResult::Transition(<Self as State<StateT>>::core_handle) 
+   }
     
     fn init(&mut self);
 
@@ -20,34 +33,53 @@ where Self : TopState{
 
     fn exit(&mut self);
 
-    fn handle(&mut self, evt: <Self as TopState>::Evt);
+    fn handle(&mut self, evt: <Self as TopState>::Evt) -> HandleResult<Self>;
     
-    fn core_handle(&mut self, evt: CoreEvt::<<Self as TopState>::Evt>){
+    fn core_handle(&mut self, evt: CoreEvt::<<Self as TopState>::Evt>) -> HandleResult<Self>{
         match evt{
-            CoreEvt::Init => <Self as State<T>>::init(self),
-            CoreEvt::Entry => <Self as State<T>>::entry(self),
-            CoreEvt::Exit => <Self as State<T>>::exit(self),
-            CoreEvt::User { user_evt } => <Self as State<T>>::handle(self, user_evt),
+            CoreEvt::Init => {
+                <Self as State<T>>::init(self);
+                return HandleResult::Handled;
+            }
+            CoreEvt::Entry => {
+                <Self as State<T>>::entry(self);
+                return HandleResult::Handled;
+            }
+            CoreEvt::Exit => {
+                <Self as State<T>>::exit(self);
+                return HandleResult::Handled;
+            }
+            CoreEvt::GetParentState =>{
+                return HandleResult::Handled;
+                //return HandleResult::Ignored(<Self as State<<Self as State<T>>::ParentState>>::core_handle);
+            }
+            CoreEvt::User { user_evt } => {
+                return HandleResult::Handled;
+                //return <Self as State<T>>::handle(self, user_evt);
+            }
         }
     }
 }
 
-//Todo delete pub
 pub enum CoreEvt<UserEvtT>{
     Init,
     Entry,
     Exit,
+    GetParentState,
     User{user_evt : UserEvtT}
 }
 
-pub struct StateMachine<UserStateMachine>{
-    user_state_machine : UserStateMachine
+
+pub struct StateMachine<UserStateMachine: TopState>{
+    user_state_machine : UserStateMachine,
+    curr_state : Option<fn(&mut UserStateMachine, <UserStateMachine as TopState>::Evt) -> HandleResult<UserStateMachine>>
 }
 
 impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
     
     pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
-        StateMachine{user_state_machine}
+        
+        StateMachine{user_state_machine, curr_state : None}
     }
 
     pub fn dispatch(&mut self, evt : CoreEvt<<UserStateMachine as TopState>::Evt>){

@@ -1,7 +1,9 @@
+use kaorust::CoreEvt;
+use kaorust::HandleResult;
 use kaorust::StateMachine;
 use kaorust::State;
 use kaorust::TopState;
-
+use kaorust::Top;
 // Evt definition
 enum BasicEvt{
 
@@ -21,7 +23,7 @@ impl TopState for BasicStateMachine{
 
 struct S1{} impl State<S1> for BasicStateMachine{
 
-    type ParentState = Self;
+    type ParentState = Top;
     fn init(&mut self) {
     
     }
@@ -34,8 +36,8 @@ struct S1{} impl State<S1> for BasicStateMachine{
     
     }
 
-    fn handle(&mut self, evt: BasicEvt) {
-    
+    fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
+         <Self as State<S1>>::transition::<S2>()
     }    
 }
 
@@ -54,8 +56,8 @@ struct S2{} impl State<S2> for BasicStateMachine{
     fn entry(&mut self) {
     
    }
-    fn handle(&mut self, evt: BasicEvt) {
-    
+    fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
+        HandleResult::Handled
     }    
 }
 
