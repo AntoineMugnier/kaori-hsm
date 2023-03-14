@@ -6,6 +6,12 @@ pub trait TopState
 {
     type Evt;
     fn init(&mut self);
+
+    fn transition<StateT>() -> HandleResult<Self>
+    where Self: State<StateT> {
+      HandleResult::Transition(<Self as State<StateT>>::core_handle) 
+   }
+
 }
 
 type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, CoreEvt<<UserStateMachineT as TopState>::Evt>) -> HandleResult<UserStateMachineT>;
@@ -22,10 +28,6 @@ pub trait State<T>
 where Self : TopState{
     type ParentState ;
     
-    fn transition<StateT>() -> HandleResult<Self>
-    where Self: State<StateT> {
-      HandleResult::Transition(<Self as State<StateT>>::core_handle) 
-   }
     
     fn init(&mut self);
 

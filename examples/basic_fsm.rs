@@ -37,7 +37,7 @@ struct S1{} impl State<S1> for BasicStateMachine{
     }
 
     fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
-         <Self as State<S1>>::transition::<S2>()
+         transition::<S2>()
     }    
 }
 
