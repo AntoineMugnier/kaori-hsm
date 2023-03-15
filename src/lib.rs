@@ -9,7 +9,7 @@ pub trait TopState
 
     fn transition<StateT>() -> HandleResult<Self>
     where Self: State<StateT> {
-      HandleResult::Transition(<Self as State<StateT>>::core_handle) 
+      HandleResult::Transition(State::<StateT>::core_handle) 
    }
 
 }
@@ -26,9 +26,20 @@ pub enum HandleResult<UserStateMachineT: TopState + ?Sized>{
 
 pub trait State<T>
 where Self : TopState{
-    type ParentState ;
+    type ParentState;
     
     
+    fn transition<StateT>() -> HandleResult<Self>
+    where Self: State<StateT> {
+      HandleResult::Transition(State::<StateT>::core_handle) 
+   }
+
+
+    fn ignored() -> HandleResult<Self>
+    where Self: State<<Self as State<T>>::ParentState> {
+        return HandleResult::Ignored(State::<<Self as State<T>>::ParentState>::core_handle);
+    }
+
     fn init(&mut self);
 
     fn entry(&mut self);
@@ -53,7 +64,7 @@ where Self : TopState{
             }
             CoreEvt::GetParentState =>{
                 return HandleResult::Handled;
-                //return HandleResult::Ignored(<Self as State<<Self as State<T>>::ParentState>>::core_handle);
+                //rturn HandleResult::Ignored(State::<State<T>::ParentState>::core_handle);
             }
             CoreEvt::User { user_evt } => {
                 return HandleResult::Handled;

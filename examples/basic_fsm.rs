@@ -37,7 +37,7 @@ struct S1{} impl State<S1> for BasicStateMachine{
     }
 
     fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
-         transition::<S2>()
+         State::<S1>::transition::<S2>()
     }    
 }
 
@@ -57,7 +57,8 @@ struct S2{} impl State<S2> for BasicStateMachine{
     
    }
     fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
-        HandleResult::Handled
+        //HandleResult::Handled
+        State::<S2>::ignored()
     }    
 }
 
