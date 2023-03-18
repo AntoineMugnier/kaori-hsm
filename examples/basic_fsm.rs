@@ -1,6 +1,6 @@
 use kaorust::CoreEvt;
 use kaorust::HandleResult;
-use kaorust::StateMachine;
+use kaorust::StateFn;
 use kaorust::State;
 use kaorust::TopState;
 use kaorust::Top;
@@ -23,7 +23,10 @@ impl TopState for BasicStateMachine{
 
 struct S1{} impl State<S1> for BasicStateMachine{
 
-    type ParentState = Top;
+    fn get_parent_state() -> StateFn<Self> {
+        Self::state_handle::<S2>()
+    }
+
     fn init(&mut self) {
     
     }
@@ -37,13 +40,16 @@ struct S1{} impl State<S1> for BasicStateMachine{
     }
 
     fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
-         State::<S1>::transition::<S2>()
+         Self::transition::<S2>()
     }    
 }
 
 struct S2{} impl State<S2> for BasicStateMachine{
     
-    type ParentState = S1;
+
+    fn get_parent_state() -> StateFn<Self> {
+        Self::state_handle::<S1>()
+    }
 
     fn init(&mut self) {
     
@@ -58,7 +64,7 @@ struct S2{} impl State<S2> for BasicStateMachine{
    }
     fn handle(&mut self, evt: BasicEvt) -> HandleResult<Self> {
         //HandleResult::Handled
-        State::<S2>::ignored()
+        Self::ignored()
     }    
 }
 

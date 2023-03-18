@@ -12,33 +12,31 @@ pub trait TopState
       HandleResult::Transition(State::<StateT>::core_handle) 
    }
 
+    fn ignored() -> HandleResult<Self>
+    {
+        return HandleResult::Ignored;
+    }
+
+    fn state_handle <StateTag>() -> StateFn<Self>
+    where Self : State<StateTag>{
+        State::<StateTag>::core_handle
+    }
 }
 
-type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, CoreEvt<<UserStateMachineT as TopState>::Evt>) -> HandleResult<UserStateMachineT>;
+pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, CoreEvt<<UserStateMachineT as TopState>::Evt>) -> HandleResult<UserStateMachineT>;
 
 pub struct Top{}
 
 pub enum HandleResult<UserStateMachineT: TopState + ?Sized>{
-    Ignored(StateFn<UserStateMachineT>),
+    Ignored,
     Handled,
-    Transition(StateFn<UserStateMachineT>),
+    Transition(StateFn<UserStateMachineT>)
 }
 
 pub trait State<T>
 where Self : TopState{
-    type ParentState;
     
-    
-    fn transition<StateT>() -> HandleResult<Self>
-    where Self: State<StateT> {
-      HandleResult::Transition(State::<StateT>::core_handle) 
-   }
-
-
-    fn ignored() -> HandleResult<Self>
-    where Self: State<<Self as State<T>>::ParentState> {
-        return HandleResult::Ignored(State::<<Self as State<T>>::ParentState>::core_handle);
-    }
+    fn get_parent_state() -> StateFn<Self>;
 
     fn init(&mut self);
 
@@ -63,12 +61,10 @@ where Self : TopState{
                 return HandleResult::Handled;
             }
             CoreEvt::GetParentState =>{
-                return HandleResult::Handled;
-                //rturn HandleResult::Ignored(State::<State<T>::ParentState>::core_handle);
+                return HandleResult::Transition(Self::get_parent_state());
             }
             CoreEvt::User { user_evt } => {
-                return HandleResult::Handled;
-                //return <Self as State<T>>::handle(self, user_evt);
+                return <Self as State<T>>::handle(self, user_evt);
             }
         }
     }
