@@ -4,14 +4,14 @@ mod sealed{
 }
 
 pub enum ParentState<UserStateMachine>
-    where UserStateMachine : TopState + ?Sized{
-    TopState,
+    where UserStateMachine : ProtoStateMachine + ?Sized{
+    ProtoStateMachine,
     SubState(StateFn<UserStateMachine>)
 }
 
 pub struct Top{}
 
-pub trait TopState
+pub trait ProtoStateMachine
 {
     type Evt;
     fn init(&mut self)-> InitResult<Self>;
@@ -27,7 +27,7 @@ pub trait TopState
    }
    
     fn return_top_state() -> ParentState<Self>{
-        ParentState::TopState
+        ParentState::ProtoStateMachine
     }
     
     fn ignored() -> HandleResult<Self>
@@ -45,20 +45,20 @@ pub trait TopState
     }
 }
 
-pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as TopState>::Evt>) -> CoreHandleResult<UserStateMachineT>;
+pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
 
 
-pub struct InitResult<UserStateMachine : TopState + ?Sized>(
+pub struct InitResult<UserStateMachine : ProtoStateMachine + ?Sized>(
     StateFn<UserStateMachine>
 );
 
-pub enum HandleResult<UserStateMachineT: TopState + ?Sized>{
+pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored,
     Handled,
     Transition(StateFn<UserStateMachineT>),
 }
 
-pub enum CoreHandleResult<UserStateMachineT: TopState + ?Sized>{
+pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored(ParentState<UserStateMachineT>),
     Handled,
     Transition(StateFn<UserStateMachineT>),
@@ -66,7 +66,7 @@ pub enum CoreHandleResult<UserStateMachineT: TopState + ?Sized>{
 }
 
 pub trait State<T>
-where Self : TopState{
+where Self : ProtoStateMachine{
     
     fn get_parent_state() -> ParentState<Self>;
 
@@ -76,9 +76,9 @@ where Self : TopState{
 
     fn exit(&mut self);
 
-    fn handle(&mut self, evt:&<Self as TopState>::Evt) -> HandleResult<Self>;
+    fn handle(&mut self, evt:&<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
     
-    fn core_handle(&mut self, evt: &CoreEvt::<<Self as TopState>::Evt>) -> CoreHandleResult<Self>{
+    fn core_handle(&mut self, evt: &CoreEvt::<<Self as ProtoStateMachine>::Evt>) -> CoreHandleResult<Self>{
         match evt{
             CoreEvt::Init => {
                 <Self as State<T>>::init(self);
@@ -115,12 +115,12 @@ pub enum CoreEvt<'a, UserEvtT>{
 }
 
 
-pub struct StateMachine<UserStateMachine: TopState>{
+pub struct StateMachine<UserStateMachine: ProtoStateMachine>{
     user_state_machine : UserStateMachine,
     curr_state : Option<StateFn<UserStateMachine>>
 }
 
-impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
+impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     
 
     pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
@@ -133,32 +133,32 @@ impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
 
         self.curr_state = Some(init_result.0);
 
-        let entry_evt = CoreEvt::<<UserStateMachine as TopState>::Evt>::Entry;
+        let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
         self.curr_state.unwrap()(&mut self.user_state_machine, &entry_evt);
         
 
     }   
 
-    fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as TopState>::Evt>){
+    fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
         match parent_state_variant{
             ParentState::SubState(super_state) => self.dispatch_core_event(super_state, evt),
-            ParentState::TopState => {}
+            ParentState::ProtoStateMachine => {}
         }
     }
 
     fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
         //Exit current state
-        let exit_evt = CoreEvt::<<UserStateMachine as TopState>::Evt>::Exit;
+        let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Exit;
         self.curr_state.unwrap()(&mut self.user_state_machine, &exit_evt);  
         
         self.curr_state = Some(target_state_fn); 
         
-        let entry_evt = CoreEvt::<<UserStateMachine as TopState>::Evt>::Entry;
+        let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
         self.curr_state.unwrap()(&mut self.user_state_machine, &entry_evt);
     }
     
-    fn dispatch_core_event(&mut self, state_fn : StateFn<UserStateMachine>, evt : & CoreEvt<<UserStateMachine as TopState>::Evt>){
+    fn dispatch_core_event(&mut self, state_fn : StateFn<UserStateMachine>, evt : & CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>){
         let core_handle_result = state_fn(&mut self.user_state_machine, evt);
         
         // Treat result of the event dispatch
@@ -170,7 +170,7 @@ impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
         }
     }
 
-    pub fn dispatch(&mut self, user_evt : &<UserStateMachine as TopState>::Evt){
+    pub fn dispatch(&mut self, user_evt : &<UserStateMachine as ProtoStateMachine>::Evt){
 
         // Dispatch user evt to current state 
         let evt = CoreEvt::User {user_evt};
@@ -183,7 +183,6 @@ impl <UserStateMachine : TopState>StateMachine<UserStateMachine>{
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn it_works() {

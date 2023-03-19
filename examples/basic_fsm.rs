@@ -1,9 +1,7 @@
 use kaorust::HandleResult;
 use kaorust::InitResult;
-use kaorust::StateFn;
 use kaorust::State;
-use kaorust::TopState;
-use kaorust::Top;
+use kaorust::ProtoStateMachine;
 use kaorust::StateMachine;
 use kaorust::ParentState;
 // Evt definition
@@ -16,7 +14,7 @@ struct BasicStateMachine{}
 
 //type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
-impl TopState for BasicStateMachine{
+impl ProtoStateMachine for BasicStateMachine{
     type Evt = BasicEvt;
 
     fn init(&mut self) -> InitResult<Self> {
