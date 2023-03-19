@@ -5,6 +5,7 @@ use kaorust::State;
 use kaorust::TopState;
 use kaorust::Top;
 use kaorust::StateMachine;
+use kaorust::ParentState;
 // Evt definition
 enum BasicEvt{
 
@@ -21,11 +22,10 @@ impl TopState for BasicStateMachine{
       Self::init_transition::<S1>()  
     }
 }
-
 struct S1{} impl State<S1> for BasicStateMachine{
 
-    fn get_parent_state() -> StateFn<Self> {
-        Self::state_handle::<S2>()
+    fn get_parent_state() -> ParentState<Self> {
+        Self::return_top_state()
     }
 
     fn init(&mut self) {
@@ -48,8 +48,8 @@ struct S1{} impl State<S1> for BasicStateMachine{
 struct S2{} impl State<S2> for BasicStateMachine{
     
 
-    fn get_parent_state() -> StateFn<Self> {
-        Self::state_handle::<S1>()
+    fn get_parent_state() -> ParentState<Self> {
+        Self::return_parent_state::<S1>()
     }
 
     fn init(&mut self) {
