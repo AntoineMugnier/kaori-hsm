@@ -127,16 +127,23 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     
         StateMachine{user_state_machine, curr_state : None}
     }
-    
+
+    pub fn dispatch_entry_evt(&mut self, state_fn : StateFn<UserStateMachine>){
+        let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
+        state_fn(&mut self.user_state_machine, &entry_evt);
+    }
+
+    pub fn dispatch_exit_evt(&mut self, state_fn : StateFn<UserStateMachine>){
+        let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Exit;
+        state_fn(&mut self.user_state_machine, &exit_evt);
+    }
+
     pub fn init(&mut self){
         let init_result = self.user_state_machine.init();
 
         self.curr_state = Some(init_result.0);
 
-        let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
-        self.curr_state.unwrap()(&mut self.user_state_machine, &entry_evt);
-        
-
+        self.dispatch_entry_evt(self.curr_state.unwrap());
     }   
 
     fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
@@ -148,14 +155,13 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
     fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
+
         //Exit current state
-        let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Exit;
-        self.curr_state.unwrap()(&mut self.user_state_machine, &exit_evt);  
+        self.dispatch_exit_evt(self.curr_state.unwrap());
         
         self.curr_state = Some(target_state_fn); 
         
-        let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
-        self.curr_state.unwrap()(&mut self.user_state_machine, &entry_evt);
+        self.dispatch_entry_evt(self.curr_state.unwrap());
     }
     
     fn dispatch_core_event(&mut self, state_fn : StateFn<UserStateMachine>, evt : & CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>){
