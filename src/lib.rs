@@ -70,11 +70,17 @@ where Self : ProtoStateMachine{
     
     fn get_parent_state() -> ParentState<Self>;
 
-    fn init(&mut self);
+    fn init(&mut self){
+        // No implementation
+    }
 
-    fn entry(&mut self);
+    fn entry(&mut self){
+        // No implementation
+    }
 
-    fn exit(&mut self);
+    fn exit(&mut self){
+        // No implementation
+    }
 
     fn handle(&mut self, evt:&<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
     
