@@ -39,7 +39,7 @@ struct S0{} impl State<S0> for BasicStateMachine{
     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::A => {
-                println!("S0-HANDLE-A");
+                println!("S0-HANDLES-A");
                 Self::transition::<S1>()
             },
             _ => Self::ignored()
@@ -65,7 +65,7 @@ struct S1{} impl State<S1> for BasicStateMachine{
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::B => {
-                println!("S1-HANDLE-B");
+                println!("S1-HANDLES-B");
                 Self::handled()
             },
             _ => Self::ignored()
