@@ -23,7 +23,7 @@ pub trait ProtoStateMachine
 
     fn init_transition<StateT>() -> InitResult<Self>
     where Self: State<StateT> {
-      InitResult(State::<StateT>::core_handle) 
+      InitResult(Some(State::<StateT>::core_handle)) 
    }
    
     fn return_top_state() -> ParentState<Self>{
@@ -46,10 +46,10 @@ pub trait ProtoStateMachine
 }
 
 pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
-
+pub type RawStateFn<UserStateMachineT> = *const fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
 
 pub struct InitResult<UserStateMachine : ProtoStateMachine + ?Sized>(
-    StateFn<UserStateMachine>
+    Option<StateFn<UserStateMachine>>
 );
 
 pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
@@ -62,7 +62,8 @@ pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored(ParentState<UserStateMachineT>),
     Handled,
     Transition(StateFn<UserStateMachineT>),
-    ReturnParentState(ParentState<UserStateMachineT>)
+    ReturnParentState(ParentState<UserStateMachineT>),
+    InitResult(InitResult<UserStateMachineT>)
 }
 
 pub trait State<T>
@@ -70,8 +71,8 @@ where Self : ProtoStateMachine{
     
     fn get_parent_state() -> ParentState<Self>;
 
-    fn init(&mut self){
-        // No implementation
+    fn init(&mut self) -> InitResult<Self>{
+       InitResult(None)
     }
 
     fn entry(&mut self){
@@ -87,8 +88,7 @@ where Self : ProtoStateMachine{
     fn core_handle(&mut self, evt: &CoreEvt::<<Self as ProtoStateMachine>::Evt>) -> CoreHandleResult<Self>{
         match evt{
             CoreEvt::Init => {
-                <Self as State<T>>::init(self);
-                return CoreHandleResult::Handled;
+               return CoreHandleResult::InitResult(<Self as State<T>>::init(self));
             }
             CoreEvt::Entry => {
                 <Self as State<T>>::entry(self);
@@ -139,17 +139,35 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         state_fn(&mut self.user_state_machine, &entry_evt);
     }
 
+    pub fn dispatch_init_evt(&mut self, state_fn : StateFn<UserStateMachine>) -> Option<StateFn<UserStateMachine>>{
+        let init_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Init;
+        let init_result = state_fn(&mut self.user_state_machine, &init_evt);
+        match init_result{
+            CoreHandleResult::InitResult(init_result) => init_result.0,
+            _ => panic!() //error, should not be possible
+        } 
+    }
+
     pub fn dispatch_exit_evt(&mut self, state_fn : StateFn<UserStateMachine>){
         let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Exit;
         state_fn(&mut self.user_state_machine, &exit_evt);
     }
 
+    pub fn reach_init_target(&mut self, target_state_fn : StateFn<UserStateMachine>) -> StateFn<UserStateMachine>{
+        
+        let mut final_target_state = target_state_fn;
+
+        while let Some(next_target_state) = self.dispatch_init_evt(target_state_fn){ 
+            self.dispatch_entry_evt(next_target_state);
+            final_target_state = next_target_state;
+        }
+        
+        final_target_state
+    }
+
     pub fn init(&mut self){
         let init_result = self.user_state_machine.init();
-
-        self.curr_state = Some(init_result.0);
-
-        self.dispatch_entry_evt(self.curr_state.unwrap());
+        self.curr_state = Some(self.reach_init_target(init_result.0.unwrap_or_else(|| panic!("Topmost Init should return a state"))));
     }   
 
     fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
@@ -161,7 +179,6 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
     fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
-
         //Exit current state
         self.dispatch_exit_evt(self.curr_state.unwrap());
         

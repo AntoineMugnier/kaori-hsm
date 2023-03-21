@@ -29,8 +29,9 @@ struct S0{} impl State<S0> for BasicStateMachine{
         Self::return_top_state()
     }
 
-    fn init(&mut self) {
-        println!("S0-INIT"); 
+    fn init(&mut self) -> InitResult<Self> {
+        println!("S0-INIT");
+        Self::init_transition::<S1>()
     }
 
     fn exit(&mut self) {
@@ -56,11 +57,7 @@ struct S1{} impl State<S1> for BasicStateMachine{
     
 
     fn get_parent_state() -> ParentState<Self> {
-        Self::return_top_state()
-    }
-
-    fn init(&mut self) {
-        println!("S1-INIT"); 
+        Self::return_parent_state::<S0>()
     }
 
     fn exit(&mut self) {
@@ -87,9 +84,9 @@ fn main(){
     sm.init();
 
     let evt_a = BasicEvt::A;
-    sm.dispatch(&evt_a);
-    sm.dispatch(&evt_a);
-    
     let evt_b = BasicEvt::B;
-    sm.dispatch(&evt_b)
+
+    sm.dispatch(&evt_a);
+    sm.dispatch(&evt_b);
+    sm.dispatch(&evt_a);
 }

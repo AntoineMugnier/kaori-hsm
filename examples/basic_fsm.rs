@@ -18,7 +18,7 @@ impl ProtoStateMachine for BasicStateMachine{
     type Evt = BasicEvt;
 
     fn init(&mut self) -> InitResult<Self> {
-      println!("TOP_INIT");  
+      println!("TOP-INIT");  
       Self::init_transition::<S0>()  
     }
 }
