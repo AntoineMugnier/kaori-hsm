@@ -31,7 +31,7 @@ struct S0{} impl State<S0> for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
         println!("S0-INIT");
-        Self::init_transition::<S1>()
+        Self::init_transition::<S11>()
     }
 
     fn exit(&mut self) {
@@ -46,14 +46,38 @@ struct S0{} impl State<S0> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 println!("S0-HANDLE-A");
-                Self::transition::<S1>()
+                Self::handled()
             },
             _ => Self::ignored()
         }
     }    
 }
 
-struct S1{} impl State<S1> for BasicStateMachine{
+struct S11{} impl State<S11> for BasicStateMachine{
+    
+    fn get_parent_state() -> ParentState<Self> {
+        Self::return_parent_state::<S0>()
+    }
+
+    fn exit(&mut self) {
+        println!("S1-EXIT"); 
+    }
+
+    fn entry(&mut self) {
+        println!("S1-ENTRY"); 
+   }
+
+    fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
+        match evt{
+            BasicEvt::B => {
+                println!("S1-HANDLE-B");
+                Self::handled()
+            },
+            _ => Self::ignored()
+        }
+    }    
+}
+struct S12{} impl State<S12> for BasicStateMachine{
     
 
     fn get_parent_state() -> ParentState<Self> {
@@ -78,7 +102,6 @@ struct S1{} impl State<S1> for BasicStateMachine{
         }
     }    
 }
-
 fn main(){
     let mut sm = StateMachine::new(BasicStateMachine{});
     sm.init();
