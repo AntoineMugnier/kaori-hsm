@@ -19,33 +19,33 @@ impl ProtoStateMachine for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
       println!("TOP_INIT");  
-      Self::init_transition::<S0>()  
+      Self::init_transition::<S1>()  
     }
 }
 
-struct S0{} impl State<S0> for BasicStateMachine{
+struct S1{} impl State<S1> for BasicStateMachine{
 
     fn get_parent_state() -> ParentState<Self> {
         Self::return_top_state()
     }
 
     fn init(&mut self) -> InitResult<Self> {
-        println!("S0-INIT");
+        println!("S1-INIT");
         Self::init_transition::<S11>()
     }
 
     fn exit(&mut self) {
-        println!("S0-EXIT"); 
+        println!("S1-EXIT"); 
     }
 
     fn entry(&mut self) {
-        println!("S0-ENTRY"); 
+        println!("S1-ENTRY"); 
     }
 
     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::A => {
-                println!("S0-HANDLE-A");
+                println!("S1-HANDLE-A");
                 Self::handled()
             },
             _ => Self::ignored()
@@ -56,22 +56,22 @@ struct S0{} impl State<S0> for BasicStateMachine{
 struct S11{} impl State<S11> for BasicStateMachine{
     
     fn get_parent_state() -> ParentState<Self> {
-        Self::return_parent_state::<S0>()
+        Self::return_parent_state::<S1>()
     }
 
     fn exit(&mut self) {
-        println!("S1-EXIT"); 
+        println!("S11-EXIT"); 
     }
 
     fn entry(&mut self) {
-        println!("S1-ENTRY"); 
+        println!("S11-ENTRY"); 
    }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
-            BasicEvt::B => {
-                println!("S1-HANDLE-B");
-                Self::handled()
+            BasicEvt::A => {
+                println!("S11-HANDLE-A");
+                Self::transition::<S121>()
             },
             _ => Self::ignored()
         }
@@ -81,27 +81,82 @@ struct S12{} impl State<S12> for BasicStateMachine{
     
 
     fn get_parent_state() -> ParentState<Self> {
-        Self::return_parent_state::<S0>()
+        Self::return_parent_state::<S1>()
     }
 
     fn exit(&mut self) {
-        println!("S1-EXIT"); 
+        println!("S12-EXIT"); 
     }
 
     fn entry(&mut self) {
-        println!("S1-ENTRY"); 
+        println!("S12-ENTRY"); 
    }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::B => {
-                println!("S1-HANDLE-B");
+                println!("S12-HANDLE-B");
                 Self::handled()
             },
             _ => Self::ignored()
         }
     }    
 }
+
+struct S121{} impl State<S121> for BasicStateMachine{
+    
+
+    fn get_parent_state() -> ParentState<Self> {
+        Self::return_parent_state::<S12>()
+    }
+
+    fn exit(&mut self) {
+        println!("S121-EXIT"); 
+    }
+
+    fn entry(&mut self) {
+        println!("S121-ENTRY"); 
+   }
+
+    fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
+        match evt{
+            BasicEvt::B => {
+                println!("S121-HANDLE-B");
+                Self::handled()
+            },
+            _ => Self::ignored()
+        }
+    }    
+}
+
+struct S122{} impl State<S122> for BasicStateMachine{
+
+    
+
+    fn get_parent_state() -> ParentState<Self> {
+        Self::return_parent_state::<S12>()
+    }
+
+    fn exit(&mut self) {
+        println!("S122-EXIT"); 
+    }
+
+    fn entry(&mut self) {
+        println!("S122-ENTRY"); 
+   }
+
+    fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
+        match evt{
+            BasicEvt::B => {
+                println!("S122-HANDLE-B");
+                Self::handled()
+            },
+            _ => Self::ignored()
+        }
+    }    
+}
+
+
 fn main(){
     let mut sm = StateMachine::new(BasicStateMachine{});
     sm.init();
