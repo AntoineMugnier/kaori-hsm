@@ -165,6 +165,6 @@ fn main(){
     let evt_b = BasicEvt::B;
 
     sm.dispatch(&evt_a);
-    sm.dispatch(&evt_b);
-    sm.dispatch(&evt_a);
+    //sm.dispatch(&evt_b);
+    //sm.dispatch(&evt_a);
 }
