@@ -19,6 +19,17 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         state_fn(&mut self.user_state_machine, &entry_evt);
     }
 
+    pub fn dispatch_get_super_state(&mut self, state_fn : StateFn<UserStateMachine>) -> ParentState<UserStateMachine>{
+        let get_parent_state_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::GetParentState;
+        let core_handle_result = state_fn(&mut self.user_state_machine, &get_parent_state_evt);
+        if let CoreHandleResult::ReturnParentState(parent_state_fn) = core_handle_result{
+            parent_state_fn
+        }
+        else{
+            panic!() //error should not be possible
+        }
+        
+    }
     pub fn dispatch_init_evt(&mut self, state_fn : StateFn<UserStateMachine>) -> Option<StateFn<UserStateMachine>>{
         let init_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Init;
         let init_result = state_fn(&mut self.user_state_machine, &init_evt);
@@ -60,19 +71,29 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
     fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
         match parent_state_variant{
-            ParentState::SubState(super_state) => self.dispatch_core_event(super_state, evt),
-            ParentState::ProtoStateMachine => {}
+            ParentState(Some(super_state)) => self.dispatch_core_event(super_state, evt),
+            ParentState(None) => {}
         }
     }
     
-    fn exit_states(&mut self, target_state_fn : StateFn<UserStateMachine>){
-            
+    fn exit_substates(&mut self, original_state_fn : StateFn<UserStateMachine>){
+        let curr_state_fn = self.curr_state.unwrap();
+        let mut next_state_fn = curr_state_fn;
+
+        while next_state_fn as *const fn() != original_state_fn as *const fn(){
+            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(next_state_fn){
+                self.dispatch_exit_evt(next_state_fn);
+                next_state_fn = parent_state_fn;
+            }
+            else{
+                panic!()
+            }
+        }     
     }
 
-    fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
+    fn handle_transition(&mut self, original_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
         
-        //Exit current state
-        self.dispatch_exit_evt(self.curr_state.unwrap());
+       self.exit_substates(original_state_fn);
         
         self.curr_state = Some(target_state_fn); 
         
@@ -86,7 +107,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         match core_handle_result{
             CoreHandleResult::Handled => {},
             CoreHandleResult::Ignored(parent_state_fn) => self.handle_ignored_evt(parent_state_fn, evt),
-            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(target_state_fn),
+            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(state_fn, target_state_fn),
             _ => {}
         }
     }

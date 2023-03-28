@@ -17,7 +17,7 @@ pub trait ProtoStateMachine
    }
    
     fn return_top_state() -> ParentState<Self>{
-        ParentState::ProtoStateMachine
+        ParentState(None)
     }
     
     fn ignored() -> HandleResult<Self>
@@ -31,6 +31,6 @@ pub trait ProtoStateMachine
 
     fn return_parent_state <StateTag>() -> ParentState<Self>
     where Self : State<StateTag>{
-        ParentState::SubState(State::<StateTag>::core_handle)
+        ParentState(Some(State::<StateTag>::core_handle))
     }
 }
