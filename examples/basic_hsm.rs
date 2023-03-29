@@ -48,6 +48,10 @@ struct S1{} impl State<S1> for BasicStateMachine{
                 println!("S1-HANDLE-A");
                 Self::handled()
             },
+            BasicEvt::B => {
+                println!("S1-HANDLE-B");
+                Self::transition::<S12>()
+            }
             _ => Self::ignored()
         }
     }    
@@ -164,7 +168,7 @@ fn main(){
     let evt_a = BasicEvt::A;
     let evt_b = BasicEvt::B;
 
-    sm.dispatch(&evt_a);
+    sm.dispatch(&evt_b);
     //sm.dispatch(&evt_b);
     //sm.dispatch(&evt_a);
 }

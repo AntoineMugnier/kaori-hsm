@@ -30,6 +30,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
         
     }
+
     pub fn dispatch_init_evt(&mut self, state_fn : StateFn<UserStateMachine>) -> Option<StateFn<UserStateMachine>>{
         let init_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Init;
         let init_result = state_fn(&mut self.user_state_machine, &init_evt);
@@ -94,7 +95,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     fn handle_transition(&mut self, original_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
         
        self.exit_substates(original_state_fn);
-        
+
         self.curr_state = Some(target_state_fn); 
         
         self.dispatch_entry_evt(self.curr_state.unwrap());
