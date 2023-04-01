@@ -1,14 +1,19 @@
 use crate::proto_state_machine::ProtoStateMachine;
 use crate::misc::{CoreEvt, StateFn, ParentState, CoreHandleResult};
 
+
 pub struct StateMachine<UserStateMachine: ProtoStateMachine>{
     user_state_machine : UserStateMachine,
     curr_state : Option<StateFn<UserStateMachine>>
 }
 
+struct Link<'a, UserStateMachine: ProtoStateMachine + ?Sized>{
+        state_fn : StateFn<UserStateMachine>,
+        next_link : Option<&'a Link<'a, UserStateMachine>> 
+}
+
 impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     
-
     pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
     
         StateMachine{user_state_machine, curr_state : None}
@@ -88,17 +93,60 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
             }
             else{
                 panic!()
-            }
+           }
         }     
     }
+    
+    fn search_common_state(&mut self, original_state_link : &Link<UserStateMachine>, target_state_link : &Link<UserStateMachine>){
 
-    fn handle_transition(&mut self, original_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
-        
-       self.exit_substates(original_state_fn);
+    }
 
-        self.curr_state = Some(target_state_fn); 
+    fn seek_state(&mut self, original_state_link : &Link<UserStateMachine>, target_state_link : &Link<UserStateMachine>) {
         
-        self.dispatch_entry_evt(self.curr_state.unwrap());
+        let candidate_original_state_link;
+        let new_original_state_link;
+        let candidate_target_state_link;
+        let new_target_state_link;
+
+        if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(original_state_link.state_fn){
+            candidate_original_state_link = Link{state_fn: parent_state_fn, next_link :Some(&original_state_link)};
+            new_original_state_link = &candidate_original_state_link;
+        }
+        else{
+            new_original_state_link = &original_state_link;
+        }
+        
+        if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
+            candidate_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
+            new_target_state_link = &candidate_target_state_link;
+        }
+        else{
+            new_target_state_link = &target_state_link;
+        }
+ 
+
+        if new_original_state_link.state_fn as *const fn() == new_target_state_link.state_fn as *const fn(){
+            self.search_common_state(new_original_state_link, new_target_state_link);            
+        }
+        
+        else{
+           self.seek_state(new_original_state_link, new_target_state_link);
+        }
+    }
+    
+    fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
+        
+        //self.exit_substates(original_state_fn);
+        let curr_state_link = Link { state_fn: self.curr_state.unwrap(), next_link: None };
+        let target_state_link = Link { state_fn: target_state_fn, next_link: None };
+
+        self.seek_state(&curr_state_link, &target_state_link);
+        
+        self.dispatch_entry_evt(target_state_fn);
+        let new_target_state_fn = self.reach_init_target(target_state_fn);
+        
+        self.curr_state = Some(new_target_state_fn);
+        
     }
     
     fn dispatch_core_event(&mut self, state_fn : StateFn<UserStateMachine>, evt : & CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>){
@@ -108,7 +156,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         match core_handle_result{
             CoreHandleResult::Handled => {},
             CoreHandleResult::Ignored(parent_state_fn) => self.handle_ignored_evt(parent_state_fn, evt),
-            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(state_fn, target_state_fn),
+            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(target_state_fn),
             _ => {}
         }
     }
