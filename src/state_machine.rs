@@ -97,52 +97,52 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }     
     }
     
-    fn search_common_state(&mut self, original_state_link : &Link<UserStateMachine>, target_state_link : &Link<UserStateMachine>){
-
+    fn find_dissociate_states(&mut self, original_state_link : Link<UserStateMachine>, target_state_link : Link<UserStateMachine>) -> (Link<UserStateMachine>, Link<UserStateMachine>){
+        
+        while original_state_link.state_fn as *const fn() == target_state_link.state_fn as *const fn(){
+            candidate_common_state = Some(original_state_link.state_fn);
+            original_state_link = original_state_link.unwrap().next_link;
+            target_state_link = target_state_link.unwrap().next_link;
+        }
+        
+        (original_state_link, target_state_link)
     }
 
-    fn seek_state(&mut self, original_state_link : &Link<UserStateMachine>, target_state_link : &Link<UserStateMachine>) {
+    fn seek_state(&mut self, original_state_link : Link<UserStateMachine>, target_state_link : Link<UserStateMachine>) {
         
-        let candidate_original_state_link;
-        let new_original_state_link;
-        let candidate_target_state_link;
-        let new_target_state_link;
-
         if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(original_state_link.state_fn){
-            candidate_original_state_link = Link{state_fn: parent_state_fn, next_link :Some(&original_state_link)};
-            new_original_state_link = &candidate_original_state_link;
+            let new_original_state_link = Link{state_fn: parent_state_fn, next_link :Some(&original_state_link)};
+            
+            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
+                let new_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
+                self.seek_state(new_original_state_link, new_target_state_link);
+            }
+            else{
+                self.seek_state(new_original_state_link, target_state_link);
+            }
         }
         else{
-            new_original_state_link = &original_state_link;
-        }
-        
-        if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
-            candidate_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
-            new_target_state_link = &candidate_target_state_link;
-        }
-        else{
-            new_target_state_link = &target_state_link;
-        }
- 
+            
+            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
+                let new_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
+                self.seek_state(original_state_link, new_target_state_link);
+            }
+            else{
+                let (dissociated_original_state, dissociated_target_state) = self.find_dissociate_states(new_original_state_link, new_target_state_link);
+                self.exit_substates(dissociated_original_state);
 
-        if new_original_state_link.state_fn as *const fn() == new_target_state_link.state_fn as *const fn(){
-            self.search_common_state(new_original_state_link, new_target_state_link);            
-        }
-        
-        else{
-           self.seek_state(new_original_state_link, new_target_state_link);
+            }   
         }
     }
     
     fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
-        //self.exit_substates(original_state_fn);
         let curr_state_link = Link { state_fn: self.curr_state.unwrap(), next_link: None };
         let target_state_link = Link { state_fn: target_state_fn, next_link: None };
 
-        self.seek_state(&curr_state_link, &target_state_link);
-        
+        self.seek_state(curr_state_link, target_state_link);
         self.dispatch_entry_evt(target_state_fn);
+        
         let new_target_state_fn = self.reach_init_target(target_state_fn);
         
         self.curr_state = Some(new_target_state_fn);
