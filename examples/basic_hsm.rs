@@ -83,7 +83,10 @@ struct S11{} impl State<S11> for BasicStateMachine{
 }
 struct S12{} impl State<S12> for BasicStateMachine{
     
-
+    fn init(&mut self) -> InitResult<Self> {
+        println!("S12-INIT"); 
+        Self::init_transition::<S121>()
+    }
     fn get_parent_state() -> ParentState<Self> {
         Self::return_parent_state::<S1>()
     }
