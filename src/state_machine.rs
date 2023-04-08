@@ -102,10 +102,10 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         let mut original_state_link = original_state_link;
         let mut target_state_link = target_state_link;
         
-        while true{
+        loop {
 
             if original_state_link.state_fn as *const fn() != target_state_link.state_fn as *const fn(){
-                (original_state_link, target_state_link)
+                return (Some(original_state_link), Some(target_state_link));
             }
                 
             if let Some(next_original_state_link) = original_state_link.next_link{
@@ -115,18 +115,18 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
                     target_state_link = next_target_state_link;
                 }
                 else{
-                    (original_state_link.next_link, None)
+                    return (original_state_link.next_link, None);
                 }
             }
 
             else{
             
                 if let Some(next_target_state_link) = target_state_link.next_link{
-                    (None, target_state_link.next_link)
+                    return (None, target_state_link.next_link);
                 }
                 
                 else{
-                    (None, None)
+                    return (None, None);
                 }
             
             
@@ -134,21 +134,18 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
 
-    fn enter_substates(&mut self, target_state_link  : &Link<UserStateMachine>) -> StateFn<UserStateMachine>{
+    fn enter_substates(&mut self, target_state_link  : &Link<UserStateMachine>) {
         
         let mut target_state_link = target_state_link;
-        
-        self.dispatch_entry_evt(target_state_link.state_fn);
         
         while let Some(next_state) = target_state_link.next_link{
             self.dispatch_entry_evt(next_state.state_fn);
             target_state_link = next_state;
         }
 
-        target_state_link.state_fn
     }
 
-    fn reach_target_state(&mut self, original_state_link : Link<UserStateMachine>, target_state_link : Link<UserStateMachine>) -> StateFn<UserStateMachine> {
+    fn reach_target_state(&mut self, original_state_link : Link<UserStateMachine>, target_state_link : Link<UserStateMachine>){
         
         if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(original_state_link.state_fn){
             let new_original_state_link = Link{state_fn: parent_state_fn, next_link :Some(&original_state_link)};
@@ -169,10 +166,19 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
             }
             else{
                 let (dissociated_original_state, dissociated_target_state) = self.find_dissociate_states(&original_state_link, &target_state_link);
-                self.exit_substates(dissociated_original_state.state_fn);
-                self.dispatch_exit_evt(dissociated_original_state.state_fn);
-                let final_target_state_fn = self.enter_substates(&dissociated_target_state);
-                final_target_state_fn
+                if let Some(dissociated_original_state_link) = dissociated_original_state{
+                    self.exit_substates(dissociated_original_state_link.state_fn);
+                    self.dispatch_exit_evt(dissociated_original_state_link.state_fn);
+                
+                }
+
+                if let Some(dissociated_target_state_link) = dissociated_target_state{
+                    self.dispatch_entry_evt(dissociated_target_state_link.state_fn);
+                    self.enter_substates(&dissociated_target_state_link);
+                }
+                
+                                    
+
             }   
         }
     }
@@ -182,9 +188,10 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         self.exit_substates(handling_state_fn);
         let curr_state_link = Link { state_fn: handling_state_fn, next_link: None };
         let target_state_link = Link { state_fn: target_state_fn, next_link: None };
+        
+        self.reach_target_state(curr_state_link, target_state_link);
 
-        let curr_state_after_target_reached = self.reach_target_state(curr_state_link, target_state_link);
-       
+        let curr_state_after_target_reached = target_state_fn;
         let new_target_state_fn = self.reach_init_target(curr_state_after_target_reached);
         
         self.curr_state = Some(new_target_state_fn);
