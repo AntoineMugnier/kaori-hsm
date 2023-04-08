@@ -97,18 +97,41 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
     
-    fn find_dissociate_states<'a>(&mut self, original_state_link : &'a Link<'a, UserStateMachine>, target_state_link : &'a Link<'a, UserStateMachine>) -> (&'a Link<'a, UserStateMachine>, &'a Link<'a, UserStateMachine>){
+    fn find_dissociate_states<'a>(&mut self, original_state_link : &'a Link<'a, UserStateMachine>, target_state_link : &'a Link<'a, UserStateMachine>) -> (Option<&'a Link<'a, UserStateMachine>>,Option< &'a Link<'a, UserStateMachine>>){
        
         let mut original_state_link = original_state_link;
         let mut target_state_link = target_state_link;
-
-        while original_state_link.state_fn as *const fn() == target_state_link.state_fn as *const fn()
-        {
-            original_state_link = original_state_link.next_link.unwrap();
-            target_state_link = target_state_link.next_link.unwrap();
-        }
         
-        (original_state_link, target_state_link)
+        while true{
+
+            if original_state_link.state_fn as *const fn() != target_state_link.state_fn as *const fn(){
+                (original_state_link, target_state_link)
+            }
+                
+            if let Some(next_original_state_link) = original_state_link.next_link{
+                
+                if let Some(next_target_state_link) = target_state_link.next_link{
+                    original_state_link = next_original_state_link;
+                    target_state_link = next_target_state_link;
+                }
+                else{
+                    (original_state_link.next_link, None)
+                }
+            }
+
+            else{
+            
+                if let Some(next_target_state_link) = target_state_link.next_link{
+                    (None, target_state_link.next_link)
+                }
+                
+                else{
+                    (None, None)
+                }
+            
+            
+            }
+        }
     }
 
     fn enter_substates(&mut self, target_state_link  : &Link<UserStateMachine>) -> StateFn<UserStateMachine>{
@@ -154,10 +177,10 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
      
-    fn handle_transition(&mut self, target_state_fn : StateFn<UserStateMachine>){
+    fn handle_transition(&mut self, handling_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
        
-        //self.exit_substates(target_state_fn);
-        let curr_state_link = Link { state_fn: self.curr_state.unwrap(), next_link: None };
+        self.exit_substates(handling_state_fn);
+        let curr_state_link = Link { state_fn: handling_state_fn, next_link: None };
         let target_state_link = Link { state_fn: target_state_fn, next_link: None };
 
         let curr_state_after_target_reached = self.reach_target_state(curr_state_link, target_state_link);
@@ -175,7 +198,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         match core_handle_result{
             CoreHandleResult::Handled => {},
             CoreHandleResult::Ignored(parent_state_fn) => self.handle_ignored_evt(parent_state_fn, evt),
-            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(target_state_fn),
+            CoreHandleResult::Transition(target_state_fn) => self.handle_transition(state_fn, target_state_fn),
             _ => {}
         }
     }
