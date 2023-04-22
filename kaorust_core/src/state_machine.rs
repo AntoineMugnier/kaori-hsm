@@ -19,14 +19,14 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         StateMachine{user_state_machine, curr_state : None}
     }
 
-    pub fn dispatch_entry_evt(&mut self, state_fn : StateFn<UserStateMachine>){
+    pub fn dispatch_entry_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
         let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Entry;
-        state_fn(&mut self.user_state_machine, &entry_evt);
+        state_fn(user_state_machine, &entry_evt);
     }
 
-    pub fn dispatch_get_super_state(&mut self, state_fn : StateFn<UserStateMachine>) -> ParentState<UserStateMachine>{
+    pub fn dispatch_get_super_state(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) -> ParentState<UserStateMachine>{
         let get_parent_state_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::GetParentState;
-        let core_handle_result = state_fn(&mut self.user_state_machine, &get_parent_state_evt);
+        let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
         if let CoreHandleResult::ReturnParentState(parent_state_fn) = core_handle_result{
             parent_state_fn
         }
@@ -36,43 +36,45 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         
     }
 
-    pub fn dispatch_init_evt(&mut self, state_fn : StateFn<UserStateMachine>) -> Option<StateFn<UserStateMachine>>{
+    pub fn dispatch_init_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) -> Option<StateFn<UserStateMachine>>{
         let init_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Init;
-        let init_result = state_fn(&mut self.user_state_machine, &init_evt);
+        let init_result = state_fn(user_state_machine, &init_evt);
         match init_result{
             CoreHandleResult::InitResult(init_result) => init_result.0,
             _ => panic!() //error, should not be possible
         } 
     }
 
-    pub fn dispatch_exit_evt(&mut self, state_fn : StateFn<UserStateMachine>){
+    pub fn dispatch_exit_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
         let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::Exit;
-        state_fn(&mut self.user_state_machine, &exit_evt);
+        state_fn(user_state_machine, &exit_evt);
     }
 
-    pub fn reach_init_target(&mut self, target_state_fn : StateFn<UserStateMachine>) -> StateFn<UserStateMachine>{
+    pub fn reach_init_target(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
         let mut current_target_state_fn = target_state_fn;
-        
-        while let Some(next_target_state) = self.dispatch_init_evt(current_target_state_fn){ 
+        let user_state_machine = &mut self.user_state_machine;
+
+        while let Some(next_target_state) = Self::dispatch_init_evt(user_state_machine, current_target_state_fn){ 
             current_target_state_fn = next_target_state;
-            self.dispatch_entry_evt(current_target_state_fn);
+            Self::dispatch_entry_evt(user_state_machine, current_target_state_fn);
         }
         
-        current_target_state_fn
+        self.curr_state = Some(current_target_state_fn);
     }
 
     pub fn init(&mut self){
 
+        let user_state_machine = &mut self.user_state_machine;
         // Call user top initial pseudostate implementation
-        let init_result = self.user_state_machine.init();
+        let init_result = user_state_machine.init();
         let topmost_init_target_state_fn = init_result.0.unwrap_or_else(|| panic!("Topmost Init should return a state"));
 
         // Reach leaf state
-        self.dispatch_entry_evt(topmost_init_target_state_fn);
-        let last_init_state_fn = self.reach_init_target(topmost_init_target_state_fn);
+        Self::dispatch_entry_evt(user_state_machine, topmost_init_target_state_fn);
 
-        self.curr_state = Some(last_init_state_fn);
+        self.reach_init_target(topmost_init_target_state_fn);
+
     }   
 
     fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
@@ -82,13 +84,12 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
     
-    fn exit_substates(&mut self, original_state_fn : StateFn<UserStateMachine>){
-        let curr_state_fn = self.curr_state.unwrap();
+    fn exit_substates(user_state_machine : &mut UserStateMachine, curr_state_fn : StateFn<UserStateMachine>, original_state_fn : StateFn<UserStateMachine>){
         let mut next_state_fn = curr_state_fn;
 
         while next_state_fn as *const fn() != original_state_fn as *const fn(){
-            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(next_state_fn){
-                self.dispatch_exit_evt(next_state_fn);
+            if let ParentState(Some(parent_state_fn)) = Self::dispatch_get_super_state(user_state_machine, next_state_fn){
+                Self::dispatch_exit_evt(user_state_machine, next_state_fn);
                 next_state_fn = parent_state_fn;
             }
             else{
@@ -134,12 +135,12 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
 
-    fn enter_substates(&mut self, target_state_link  : &Link<UserStateMachine>) {
+    fn enter_substates(user_state_machine : &mut UserStateMachine, target_state_link  : &Link<UserStateMachine>) {
         
         let mut target_state_link = target_state_link;
         
         while let Some(next_state) = target_state_link.next_link{
-            self.dispatch_entry_evt(next_state.state_fn);
+            Self::dispatch_entry_evt(user_state_machine, next_state.state_fn);
             target_state_link = next_state;
         }
 
@@ -147,10 +148,10 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
     fn reach_target_state(&mut self, original_state_link : Link<UserStateMachine>, target_state_link : Link<UserStateMachine>){
         
-        if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(original_state_link.state_fn){
+        if let ParentState(Some(parent_state_fn)) = Self::dispatch_get_super_state(&mut self.user_state_machine, original_state_link.state_fn){
             let new_original_state_link = Link{state_fn: parent_state_fn, next_link :Some(&original_state_link)};
             
-            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
+            if let ParentState(Some(parent_state_fn)) = Self::dispatch_get_super_state(&mut self.user_state_machine, target_state_link.state_fn){
                 let new_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
                 self.reach_target_state(new_original_state_link, new_target_state_link)
             }
@@ -160,21 +161,21 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
         else{
             
-            if let ParentState(Some(parent_state_fn)) = self.dispatch_get_super_state(target_state_link.state_fn){
+            if let ParentState(Some(parent_state_fn)) = Self::dispatch_get_super_state(&mut self.user_state_machine, target_state_link.state_fn){
                 let new_target_state_link = Link{state_fn: parent_state_fn, next_link :Some(&target_state_link)};
                 self.reach_target_state(original_state_link, new_target_state_link)
             }
             else{
                 let (dissociated_original_state, dissociated_target_state) = self.find_dissociate_states(&original_state_link, &target_state_link);
                 if let Some(dissociated_original_state_link) = dissociated_original_state{
-                    self.exit_substates(dissociated_original_state_link.state_fn);
-                    self.dispatch_exit_evt(dissociated_original_state_link.state_fn);
+                    Self::exit_substates(&mut self.user_state_machine, self.curr_state.unwrap(), dissociated_original_state_link.state_fn);
+                    Self::dispatch_exit_evt(&mut self.user_state_machine, dissociated_original_state_link.state_fn);
                 
                 }
 
                 if let Some(dissociated_target_state_link) = dissociated_target_state{
-                    self.dispatch_entry_evt(dissociated_target_state_link.state_fn);
-                    self.enter_substates(&dissociated_target_state_link);
+                    Self::dispatch_entry_evt(&mut self.user_state_machine, dissociated_target_state_link.state_fn);
+                    Self::enter_substates(&mut self.user_state_machine, dissociated_target_state_link);
                 }
                 
                                     
@@ -185,16 +186,15 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
      
     fn handle_transition(&mut self, handling_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
        
-        self.exit_substates(handling_state_fn);
+        Self::exit_substates(&mut self.user_state_machine, self.curr_state.unwrap(), handling_state_fn);
         let curr_state_link = Link { state_fn: handling_state_fn, next_link: None };
         let target_state_link = Link { state_fn: target_state_fn, next_link: None };
         
         self.reach_target_state(curr_state_link, target_state_link);
 
         let curr_state_after_target_reached = target_state_fn;
-        let new_target_state_fn = self.reach_init_target(curr_state_after_target_reached);
+        self.reach_init_target(curr_state_after_target_reached);
         
-        self.curr_state = Some(new_target_state_fn);
         
     }
     
