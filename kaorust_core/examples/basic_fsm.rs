@@ -1,9 +1,9 @@
-use kaorust::HandleResult;
-use kaorust::InitResult;
-use kaorust::State;
-use kaorust::ProtoStateMachine;
-use kaorust::StateMachine;
-use kaorust::ParentState;
+use kaorust_core::HandleResult;
+use kaorust_core::InitResult;
+use kaorust_core::State;
+use kaorust_core::ProtoStateMachine;
+use kaorust_core::StateMachine;
+use kaorust_core::ParentState;
 // Evt definition
 enum BasicEvt{
 A,
