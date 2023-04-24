@@ -6,13 +6,23 @@ use kaorust_core::StateMachine;
 use kaorust_core::ParentState;
 use kaorust_derive::state;
 // Evt definition
+#[derive(Debug)] 
 enum BasicEvt{
 A,
-B
+B,
+C,
+D
 }
 
-struct BasicStateMachine{}
+struct BasicStateMachine{
+    a: u8
+}
 
+impl BasicStateMachine{
+    pub fn new() -> BasicStateMachine{
+        BasicStateMachine { a: 0 }
+    }
+}
 //type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
 impl ProtoStateMachine for BasicStateMachine{
@@ -23,6 +33,7 @@ impl ProtoStateMachine for BasicStateMachine{
       Self::init_transition::<S1>()  
     }
 }
+
 #[state(state_name= S1, super_state_name= Top)]
 impl State<state_name> for BasicStateMachine{
 
@@ -42,12 +53,16 @@ impl State<state_name> for BasicStateMachine{
     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::A => {
-                println!("S1-HANDLE-A");
+                println!("S1-HANDLES-A");
                 Self::handled()
             },
-            BasicEvt::B => {
-                println!("S1-HANDLE-B");
-                Self::transition::<S12>()
+            BasicEvt::C => {
+                println!("S1-HANDLES-C");
+                Self::transition::<S122>()
+            },
+            BasicEvt::D => {
+                println!("S1-HANDLES-D");
+                Self::transition::<S1>()
             }
             _ => Self::ignored()
         }
@@ -68,25 +83,37 @@ impl State<state_name> for BasicStateMachine{
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::A => {
-                println!("S11-HANDLE-A");
+                println!("S11-HANDLES-A");
                 Self::transition::<S121>()
+            },
+            BasicEvt::B => {
+                println!("S11-HANDLES-B");
+                
+                self.a+=1;
+                
+                if self.a == 2{
+                    self.a = 0;
+                    Self::transition::<S12>()
+                }
+                else{
+                    Self::ignored()
+                }
             },
             _ => Self::ignored()
         }
     }    
 }
-struct S12{} impl State<S12> for BasicStateMachine{
+
+#[state(state_name= S12, super_state_name= S1)]
+impl State<state_name> for BasicStateMachine{
     
     fn init(&mut self) -> InitResult<Self> {
         println!("S12-INIT"); 
         Self::init_transition::<S121>()
     }
-    fn get_parent_state() -> ParentState<Self> {
-        Self::return_parent_state::<S1>()
-    }
 
     fn exit(&mut self) {
-        println!("S12-EXIT"); 
+        println!("S12-EXIT");
     }
 
     fn entry(&mut self) {
@@ -96,20 +123,20 @@ struct S12{} impl State<S12> for BasicStateMachine{
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::B => {
-                println!("S12-HANDLE-B");
+                println!("S12-HANDLES-B");
                 Self::handled()
+            },
+            BasicEvt::D => {
+                println!("S12-HANDLES-D");
+                Self::transition::<S121>()
             },
             _ => Self::ignored()
         }
     }    
 }
 
-struct S121{} impl State<S121> for BasicStateMachine{
-    
-
-    fn get_parent_state() -> ParentState<Self> {
-        Self::return_parent_state::<S12>()
-    }
+#[state(state_name= S121, super_state_name= S12)]
+impl State<state_name> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S121-EXIT"); 
@@ -121,22 +148,25 @@ struct S121{} impl State<S121> for BasicStateMachine{
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
+            BasicEvt::A => {
+                println!("S121-HANDLES-A");
+                Self::transition::<S122>()
+            },
             BasicEvt::B => {
-                println!("S121-HANDLE-B");
-                Self::handled()
+                println!("S121-HANDLES-B");
+                Self::transition::<S12>()
+            },
+            BasicEvt::C => {
+                println!("S121-HANDLES-C");
+                Self::transition::<S11>()
             },
             _ => Self::ignored()
         }
     }    
 }
 
-struct S122{} impl State<S122> for BasicStateMachine{
-
-    
-
-    fn get_parent_state() -> ParentState<Self> {
-        Self::return_parent_state::<S12>()
-    }
+#[state(state_name= S122, super_state_name= S12)]
+impl State<state_name> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S122-EXIT"); 
@@ -148,24 +178,60 @@ struct S122{} impl State<S122> for BasicStateMachine{
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt{
+
             BasicEvt::B => {
-                println!("S122-HANDLE-B");
+                println!("S122-HANDLES-B");
                 Self::handled()
+            },
+            BasicEvt::C => {
+                println!("S122-HANDLES-C");
+                Self::transition::<S122>()
+            }, 
+            BasicEvt::D => {
+                println!("S122-HANDLES-D");
+                Self::transition::<S1>()
             },
             _ => Self::ignored()
         }
     }    
 }
 
+use rand::{thread_rng, Rng};
+
+fn make_evt_list(list_size: usize) -> Vec<BasicEvt>{
+    let rng = rand::thread_rng;
+    let mut evt_list = Vec::new();
+
+    for _ in (0..list_size){
+
+        match rng().gen_range(0..4){
+            0 => evt_list.push(BasicEvt::A),
+            1 => evt_list.push(BasicEvt::B),
+            2 => evt_list.push(BasicEvt::C),
+            3 => evt_list.push(BasicEvt::D),
+            _ => {}
+        }
+    } 
+    evt_list
+}
 
 fn main(){
-    let mut sm = StateMachine::new(BasicStateMachine{});
+    let basic_state_machine = BasicStateMachine::new();
+
+    let mut sm = StateMachine::new(basic_state_machine);
+    
+    println!("Init state machine");
     sm.init();
 
-    let evt_a = BasicEvt::A;
-    let evt_b = BasicEvt::B;
+    let list_size = 4;
+    
+    let evt_list = make_evt_list(list_size);
+    
+    for evt in evt_list{
+        println!("\r\nDispatching evt {:?}", evt);
+        sm.dispatch(&evt);
+    }
 
-    sm.dispatch(&evt_b);
     //sm.dispatch(&evt_b);
     //sm.dispatch(&evt_a);
 }

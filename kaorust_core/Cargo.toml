@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 kaorust_derive= {path = "../kaorust_derive/"}
+rand = "0.8.5"
