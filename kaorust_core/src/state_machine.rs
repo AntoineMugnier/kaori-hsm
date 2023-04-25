@@ -177,9 +177,6 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
                     Self::dispatch_entry_evt(&mut self.user_state_machine, dissociated_target_state_link.state_fn);
                     Self::enter_substates(&mut self.user_state_machine, dissociated_target_state_link);
                 }
-                
-                                    
-
             }   
         }
     }
@@ -187,9 +184,16 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     fn handle_transition(&mut self, handling_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
        
         Self::exit_substates(&mut self.user_state_machine, self.curr_state.unwrap(), handling_state_fn);
+
+        // Special handling in case of targetting the current state
+        if handling_state_fn as *const fn() == target_state_fn as *const fn(){
+            Self::dispatch_exit_evt(&mut self.user_state_machine, handling_state_fn);
+            Self::dispatch_entry_evt(&mut self.user_state_machine, handling_state_fn);
+        }
+
         let curr_state_link = Link { state_fn: handling_state_fn, next_link: None };
         let target_state_link = Link { state_fn: target_state_fn, next_link: None };
-        
+
         self.reach_target_state(curr_state_link, target_state_link);
 
         let curr_state_after_target_reached = target_state_fn;

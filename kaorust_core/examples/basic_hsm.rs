@@ -6,6 +6,8 @@ use kaorust_core::StateMachine;
 use kaorust_core::ParentState;
 use kaorust_derive::state;
 // Evt definition
+
+use rand::Rng;
 #[derive(Debug)] 
 enum BasicEvt{
 A,
@@ -196,13 +198,12 @@ impl State<state_name> for BasicStateMachine{
     }    
 }
 
-use rand::{thread_rng, Rng};
 
 fn make_evt_list(list_size: usize) -> Vec<BasicEvt>{
     let rng = rand::thread_rng;
     let mut evt_list = Vec::new();
 
-    for _ in (0..list_size){
+    for _ in 0..list_size{
 
         match rng().gen_range(0..4){
             0 => evt_list.push(BasicEvt::A),
@@ -231,7 +232,4 @@ fn main(){
         println!("\r\nDispatching evt {:?}", evt);
         sm.dispatch(&evt);
     }
-
-    //sm.dispatch(&evt_b);
-    //sm.dispatch(&evt_a);
 }
