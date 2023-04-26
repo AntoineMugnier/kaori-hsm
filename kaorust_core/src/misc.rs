@@ -1,8 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
 
-pub struct ParentState<UserStateMachine : ProtoStateMachine + ?Sized>(
-    pub Option<StateFn<UserStateMachine>>
-);
 
 pub struct Top{}
 
@@ -10,9 +7,15 @@ pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserS
 pub type RawStateFn<UserStateMachineT> = *const fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
 
 
-pub struct InitResult<UserStateMachine : ProtoStateMachine + ?Sized>(
-    pub Option<StateFn<UserStateMachine>>
-);
+pub enum ParentState<UserStateMachine : ProtoStateMachine + ?Sized>{
+    TopReached,
+    Exists(StateFn<UserStateMachine>)
+}
+
+pub enum InitResult<UserStateMachine : ProtoStateMachine + ?Sized>{
+    NotImplemented,
+    TargetState(StateFn<UserStateMachine>)
+}
 
 pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored,
@@ -24,14 +27,14 @@ pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored(ParentState<UserStateMachineT>),
     Handled,
     Transition(StateFn<UserStateMachineT>),
-    ReturnParentState(ParentState<UserStateMachineT>),
+    GetParentStateResult(ParentState<UserStateMachineT>),
     InitResult(InitResult<UserStateMachineT>)
 }
 
 pub enum CoreEvt<'a, UserEvtT>{
-    Init,
-    Entry,
-    Exit,
-    GetParentState,
-    User{user_evt : &'a UserEvtT}
+    InitEvt,
+    EntryEvt,
+    ExitEvt,
+    GetParentStateEvt,
+    UserEvt{user_evt : &'a UserEvtT}
 }

@@ -13,11 +13,11 @@ pub trait ProtoStateMachine
 
     fn init_transition<StateT>() -> InitResult<Self>
     where Self: State<StateT> {
-      InitResult(Some(State::<StateT>::core_handle)) 
+      InitResult::TargetState(State::<StateT>::core_handle) 
    }
    
     fn return_top_state() -> ParentState<Self>{
-        ParentState(None)
+        ParentState::TopReached
     }
     
     fn ignored() -> HandleResult<Self>
@@ -31,6 +31,6 @@ pub trait ProtoStateMachine
 
     fn return_parent_state <StateTag>() -> ParentState<Self>
     where Self : State<StateTag>{
-        ParentState(Some(State::<StateTag>::core_handle))
+        ParentState::Exists(State::<StateTag>::core_handle)        
     }
 }

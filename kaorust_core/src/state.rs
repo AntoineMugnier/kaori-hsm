@@ -7,7 +7,7 @@ where Self : ProtoStateMachine{
     fn get_parent_state() -> ParentState<Self>;
 
     fn init(&mut self) -> InitResult<Self>{
-       InitResult(None)
+       InitResult::NotImplemented
     }
 
     fn entry(&mut self){
@@ -22,21 +22,21 @@ where Self : ProtoStateMachine{
     
     fn core_handle(&mut self, evt: &CoreEvt::<<Self as ProtoStateMachine>::Evt>) -> CoreHandleResult<Self>{
         match evt{
-            CoreEvt::Init => {
+            CoreEvt::InitEvt => {
                return CoreHandleResult::InitResult(<Self as State<T>>::init(self));
             }
-            CoreEvt::Entry => {
+            CoreEvt::EntryEvt => {
                 <Self as State<T>>::entry(self);
                 return CoreHandleResult::Handled;
             }
-            CoreEvt::Exit => {
+            CoreEvt::ExitEvt => {
                 <Self as State<T>>::exit(self);
                 return CoreHandleResult::Handled;
             }
-            CoreEvt::GetParentState =>{
-                return CoreHandleResult::ReturnParentState(Self::get_parent_state());
+            CoreEvt::GetParentStateEvt =>{
+                return CoreHandleResult::GetParentStateResult(Self::get_parent_state());
             }
-            CoreEvt::User { user_evt } => {
+            CoreEvt::UserEvt { user_evt } => {
                 match <Self as State<T>>::handle(self, user_evt){
                     HandleResult::Ignored => return CoreHandleResult::Ignored(Self::get_parent_state()),
                     HandleResult::Handled => return CoreHandleResult::Handled,
