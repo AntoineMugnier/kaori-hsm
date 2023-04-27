@@ -1,5 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
-
+use crate::state::{CoreHandleResult, HandleResult};
 
 pub struct Top{}
 
@@ -17,19 +17,7 @@ pub enum InitResult<UserStateMachine : ProtoStateMachine + ?Sized>{
     TargetState(StateFn<UserStateMachine>)
 }
 
-pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
-    Ignored,
-    Handled,
-    Transition(StateFn<UserStateMachineT>),
-}
 
-pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
-    Ignored(ParentState<UserStateMachineT>),
-    Handled,
-    Transition(StateFn<UserStateMachineT>),
-    GetParentStateResult(ParentState<UserStateMachineT>),
-    InitResult(InitResult<UserStateMachineT>)
-}
 
 pub enum CoreEvt<'a, UserEvtT>{
     InitEvt,
@@ -38,3 +26,4 @@ pub enum CoreEvt<'a, UserEvtT>{
     GetParentStateEvt,
     UserEvt{user_evt : &'a UserEvtT}
 }
+

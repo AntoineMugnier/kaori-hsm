@@ -1,6 +1,7 @@
 use crate::InitResult;
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::misc::{CoreEvt, StateFn, ParentState, CoreHandleResult};
+use crate::misc::{CoreEvt, StateFn, ParentState};
+use crate::state::CoreHandleResult;
 
 
 pub struct StateMachine<UserStateMachine: ProtoStateMachine>{

@@ -1,5 +1,19 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::misc::{CoreEvt, InitResult, HandleResult, ParentState, CoreHandleResult};
+use crate::misc::{CoreEvt,StateFn, InitResult,ParentState };
+
+pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
+    Ignored,
+    Handled,
+    Transition(StateFn<UserStateMachineT>),
+}
+
+pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
+    Ignored(ParentState<UserStateMachineT>),
+    Handled,
+    Transition(StateFn<UserStateMachineT>),
+    GetParentStateResult(ParentState<UserStateMachineT>),
+    InitResult(InitResult<UserStateMachineT>)
+}
 
 pub trait State<T>
 where Self : ProtoStateMachine{
