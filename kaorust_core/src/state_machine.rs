@@ -6,7 +6,7 @@ use crate::state::{CoreHandleResult, StateFn};
 
 pub struct StateMachine<UserStateMachine: ProtoStateMachine>{
     user_state_machine : UserStateMachine,
-    curr_state : Option<StateFn<UserStateMachine>>
+    curr_state :StateFn<UserStateMachine>
 }
 
 struct Link<'a, UserStateMachine: ProtoStateMachine + ?Sized>{
@@ -15,10 +15,13 @@ struct Link<'a, UserStateMachine: ProtoStateMachine + ?Sized>{
 }
 
 impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
-    
+   fn default_state(_user_sm: &mut UserStateMachine, _evt: &CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachine>{
+        panic!("dispatch() function called on state_machine before init")
+    } 
+
     pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
     
-        StateMachine{user_state_machine, curr_state : None}
+        StateMachine{user_state_machine, curr_state : Self::default_state}
     }
 
     pub fn dispatch_entry_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
@@ -62,7 +65,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
             Self::dispatch_entry_evt(user_state_machine, current_target_state_fn);
         }
         
-        self.curr_state = Some(current_target_state_fn);
+        self.curr_state = current_target_state_fn;
     }
 
     pub fn init(&mut self){
@@ -174,7 +177,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
             else{
                 let (dissociated_original_state, dissociated_target_state) = self.find_dissociate_states(&original_state_link, &target_state_link);
                 if let Some(dissociated_original_state_link) = dissociated_original_state{
-                    Self::exit_substates(&mut self.user_state_machine, self.curr_state.unwrap(), dissociated_original_state_link.state_fn);
+                    Self::exit_substates(&mut self.user_state_machine, self.curr_state, dissociated_original_state_link.state_fn);
                     Self::dispatch_exit_evt(&mut self.user_state_machine, dissociated_original_state_link.state_fn);
                 
                 }
@@ -189,7 +192,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
      
     fn handle_transition(&mut self, handling_state_fn : StateFn<UserStateMachine>, target_state_fn : StateFn<UserStateMachine>){
        
-        Self::exit_substates(&mut self.user_state_machine, self.curr_state.unwrap(), handling_state_fn);
+        Self::exit_substates(&mut self.user_state_machine, self.curr_state, handling_state_fn);
 
         // Special handling in case of targetting the current state
         if handling_state_fn as *const fn() == target_state_fn as *const fn(){
@@ -224,7 +227,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
         // Dispatch user evt to current state 
         let evt = CoreEvt::UserEvt {user_evt};
-        let current_state_fn = self.curr_state.unwrap(); 
+        let current_state_fn = self.curr_state;
         self.dispatch_core_event(current_state_fn, &evt);
    }
 
