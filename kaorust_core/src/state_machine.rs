@@ -131,7 +131,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
 
             else{
             
-                if let Some(next_target_state_link) = target_state_link.next_link{
+                if target_state_link.next_link.is_some(){
                     return (None, target_state_link.next_link);
                 }
                 

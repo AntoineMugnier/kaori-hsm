@@ -1,5 +1,4 @@
-use std::str::FromStr;
-use syn::{ItemStruct, ItemImpl, parse::Parse, visit_mut::{self, VisitMut},  parse_macro_input, Token,Ident, bracketed, parenthesized};
+use syn::{ItemImpl, parse::Parse, visit_mut::VisitMut, Token, Ident};
 use quote::quote;
 use proc_macro2::{TokenStream, Span};
 
@@ -8,7 +7,6 @@ pub fn state(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> pr
     let output_token_stream = state_impl(proc_macro2::TokenStream::from(args), proc_macro2::TokenStream::from(item));
     proc_macro::TokenStream::from(output_token_stream)
 }
-
 
 struct AttrStateDecl{
     state_name : syn::Ident,
@@ -77,15 +75,6 @@ pub(crate) fn state_impl(args: TokenStream, item: TokenStream)-> TokenStream{
     
     let get_super_state_fn: syn::ImplItemFn;
     
-    let gdet_super_state_fn: syn::ImplItemFn = syn::parse2( 
-        quote!(
-            fn get_parent_state() -> ParentState<Self> {
-                Self::return_top_state()
-            }
-        )
-    ).unwrap();
-
-
     if super_user_state_ident.to_string() == "Top"{
     
         get_super_state_fn = syn::parse2( 

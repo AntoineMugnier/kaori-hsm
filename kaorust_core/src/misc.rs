@@ -1,5 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::state::{StateFn, HandleResult};
+use crate::state::StateFn;
 
 pub struct Top{}
 
