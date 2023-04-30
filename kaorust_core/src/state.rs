@@ -1,5 +1,7 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::misc::{CoreEvt,StateFn, InitResult,ParentState };
+use crate::misc::{CoreEvt, InitResult,ParentState };
+
+pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
 
 pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Ignored,
