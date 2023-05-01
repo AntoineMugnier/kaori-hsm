@@ -14,6 +14,7 @@ struct Link<'a, UserStateMachine: ProtoStateMachine + ?Sized>{
         next_link : Option<&'a Link<'a, UserStateMachine>> 
 }
 
+/// Struct encapsulating the business logic of hierarchical state machine
 impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
    fn default_state(_user_sm: &mut UserStateMachine, _evt: &CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachine>{
         panic!("dispatch() function called on state_machine before init")

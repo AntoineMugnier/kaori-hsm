@@ -1,3 +1,5 @@
+//! Kaorust crate allows its users to develop efficiently Hierarchical State Machine (HSM) in code
+//! events to it
 pub mod proto_state_machine;
 pub mod state;
 pub mod state_machine;
