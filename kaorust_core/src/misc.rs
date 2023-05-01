@@ -1,9 +1,6 @@
 use crate::proto_state_machine::ProtoStateMachine;
 use crate::state::StateFn;
 
-pub struct Top{}
-
-
 pub enum ParentState<UserStateMachine : ProtoStateMachine + ?Sized>{
     TopReached,
     Exists(StateFn<UserStateMachine>)

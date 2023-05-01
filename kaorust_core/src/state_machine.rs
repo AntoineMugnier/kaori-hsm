@@ -1,6 +1,5 @@
-use crate::InitResult;
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::misc::{CoreEvt, ParentState};
+use crate::misc::{CoreEvt, ParentState, InitResult};
 use crate::state::{CoreHandleResult, StateFn};
 
 
