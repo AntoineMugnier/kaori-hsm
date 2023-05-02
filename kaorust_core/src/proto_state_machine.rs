@@ -1,5 +1,4 @@
-pub use crate::misc::{ParentState, InitResult};
-pub use crate::state::{HandleResult, CoreHandleResult, State};
+pub use crate::state::{HandleResult, InitResult, ParentState, CoreHandleResult, State};
 pub trait ProtoStateMachine
 {
     type Evt;

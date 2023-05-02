@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
 use std::sync::mpsc::TryRecvError;
@@ -13,7 +12,6 @@ use kaorust_core::ParentState;
 use kaorust_derive::state;
 // Evt definition
 
-use rand::Rng;
 #[derive(Debug)] 
 enum BasicEvt{
 A,

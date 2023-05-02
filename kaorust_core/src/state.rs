@@ -1,5 +1,4 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::misc::{CoreEvt, InitResult,ParentState };
 
 pub type StateFn<UserStateMachineT> = fn(&mut UserStateMachineT, &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachineT>;
 
@@ -15,6 +14,24 @@ pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized>{
     Transition(StateFn<UserStateMachineT>),
     GetParentStateResult(ParentState<UserStateMachineT>),
     InitResult(InitResult<UserStateMachineT>)
+}
+
+pub enum ParentState<UserStateMachine : ProtoStateMachine + ?Sized>{
+    TopReached,
+    Exists(StateFn<UserStateMachine>)
+}
+
+pub enum InitResult<UserStateMachine : ProtoStateMachine + ?Sized>{
+    NotImplemented,
+    TargetState(StateFn<UserStateMachine>)
+}
+
+pub enum CoreEvt<'a, UserEvtT>{
+    InitEvt,
+    EntryEvt,
+    ExitEvt,
+    GetParentStateEvt,
+    UserEvt{user_evt : &'a UserEvtT}
 }
 
 pub trait State<T>

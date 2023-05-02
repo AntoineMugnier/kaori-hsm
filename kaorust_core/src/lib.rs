@@ -3,10 +3,8 @@
 mod proto_state_machine;
 mod state;
 mod state_machine;
-mod misc;
 
-pub use misc::{InitResult, ParentState};
-pub use state::{State, HandleResult};
+pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;
 pub use state_machine::StateMachine;
 
