@@ -18,7 +18,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         panic!("dispatch() function called on state_machine before init")
     } 
 
-    pub fn new(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
+    pub fn from(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
     
         StateMachine{user_state_machine, curr_state : Self::default_state}
     }

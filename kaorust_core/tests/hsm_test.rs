@@ -235,7 +235,7 @@ fn name() {
 
     let basic_state_machine = BasicStateMachine::new(sender);
 
-    let mut sm = StateMachine::new(basic_state_machine);
+    let mut sm = StateMachine::from(basic_state_machine);
     
     test_sm_init(&mut sm, &mut receiver, vec!["TOP_INIT","S1-ENTRY","S1-INIT","S11-ENTRY"]);
     test_evt_injection(&mut sm, &mut receiver, BasicEvt::A, vec!["S11-HANDLES-A", "S11-EXIT", "S12-ENTRY", "S121-ENTRY"]);

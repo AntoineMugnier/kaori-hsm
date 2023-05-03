@@ -219,7 +219,7 @@ fn make_evt_list(list_size: usize) -> Vec<BasicEvt>{
 fn main(){
     let basic_state_machine = BasicStateMachine::new();
 
-    let mut sm = StateMachine::new(basic_state_machine);
+    let mut sm = StateMachine::from(basic_state_machine);
     
     println!("Init state machine");
     sm.init();
