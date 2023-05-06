@@ -23,12 +23,12 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         StateMachine{user_state_machine, curr_state : Self::default_state}
     }
 
-    pub fn dispatch_entry_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
+    fn dispatch_entry_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
         let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::EntryEvt;
         state_fn(user_state_machine, &entry_evt);
     }
 
-    pub fn dispatch_get_super_state(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) -> ParentState<UserStateMachine>{
+    fn dispatch_get_super_state(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) -> ParentState<UserStateMachine>{
         let get_parent_state_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::GetParentStateEvt;
         let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
         if let CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result{
@@ -40,7 +40,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         
     }
 
-    pub fn dispatch_init_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) ->InitResult<UserStateMachine>{
+    fn dispatch_init_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>) ->InitResult<UserStateMachine>{
         let init_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::InitEvt;
         let init_result = state_fn(user_state_machine, &init_evt);
         match init_result{
@@ -49,12 +49,12 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         } 
     }
 
-    pub fn dispatch_exit_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
+    fn dispatch_exit_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
         let exit_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::ExitEvt;
         state_fn(user_state_machine, &exit_evt);
     }
 
-    pub fn reach_init_target(&mut self, target_state_fn : StateFn<UserStateMachine>){
+    fn reach_init_target(&mut self, target_state_fn : StateFn<UserStateMachine>){
         
         let mut current_target_state_fn = target_state_fn;
         let user_state_machine = &mut self.user_state_machine;

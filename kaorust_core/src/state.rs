@@ -53,6 +53,7 @@ where Self : ProtoStateMachine{
 
     fn handle(&mut self, evt:&<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
     
+    #[doc(hidden)]
     fn core_handle(&mut self, evt: &CoreEvt::<<Self as ProtoStateMachine>::Evt>) -> CoreHandleResult<Self>{
         match evt{
             CoreEvt::InitEvt => {

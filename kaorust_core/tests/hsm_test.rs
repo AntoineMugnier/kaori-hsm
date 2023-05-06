@@ -230,7 +230,7 @@ fn test_sm_init(sm : &mut StateMachine<BasicStateMachine>, receiver: &mut Receiv
 }
 
 #[test]
-fn name() {
+fn hsm_test() {
     let (sender,mut receiver) = channel();
 
     let basic_state_machine = BasicStateMachine::new(sender);
