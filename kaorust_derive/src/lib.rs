@@ -80,7 +80,7 @@ pub(crate) fn state_impl(args: TokenStream, item: TokenStream)-> TokenStream{
         get_super_state_fn = syn::parse2( 
         quote!(
             fn get_parent_state() -> ParentState<Self> {
-                Self::return_top_state()
+                ParentState::TopReached
             }
         )
     ).unwrap();
@@ -90,7 +90,7 @@ pub(crate) fn state_impl(args: TokenStream, item: TokenStream)-> TokenStream{
          get_super_state_fn  = syn::parse2( 
             quote!(
                 fn get_parent_state() -> ParentState<Self> {
-                    Self::return_parent_state::<#super_user_state_ident>()
+                    ParentState::Exists(State::<#super_user_state_ident>::core_handle)        
                 }
             )
         ).unwrap();

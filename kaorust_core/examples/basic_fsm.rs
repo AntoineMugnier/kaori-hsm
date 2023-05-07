@@ -1,4 +1,5 @@
 use kaorust_core::*;
+use kaorust_derive::*;
 
 // Evt definition
 enum BasicEvt{
@@ -18,11 +19,10 @@ impl ProtoStateMachine for BasicStateMachine{
       init_transition!(S0)  
     }
 }
-struct S0{} impl State<S0> for BasicStateMachine{
 
-    fn get_parent_state() -> ParentState<Self> {
-        Self::return_top_state()
-    }
+
+#[state(state_name= S0, super_state_name= Top)]
+impl State<S0> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S0-EXIT"); 
@@ -43,12 +43,8 @@ struct S0{} impl State<S0> for BasicStateMachine{
     }    
 }
 
-struct S1{} impl State<S1> for BasicStateMachine{
-    
-
-    fn get_parent_state() -> ParentState<Self> {
-        Self::return_top_state()
-    }
+#[state(state_name= S1, super_state_name= Top)]
+impl State<S1> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S1-EXIT"); 
