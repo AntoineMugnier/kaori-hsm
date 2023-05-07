@@ -3,15 +3,10 @@ use std::sync::mpsc::Sender;
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::channel;
 
-use kaorust_core::HandleResult;
-use kaorust_core::InitResult;
-use kaorust_core::State;
-use kaorust_core::ProtoStateMachine;
-use kaorust_core::StateMachine;
-use kaorust_core::ParentState;
+use kaorust_core::*;
 use kaorust_derive::state;
-// Evt definition
 
+// Evt definition
 #[derive(Debug)] 
 enum BasicEvt{
 A,
@@ -37,7 +32,7 @@ impl ProtoStateMachine for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
       self.sender.send(String::from("TOP_INIT")).unwrap();  
-      Self::init_transition::<S1>()  
+      init_transition!(S1)  
     }
 }
 
@@ -46,7 +41,7 @@ impl State<state_name> for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
         self.sender.send(String::from("S1-INIT")).unwrap();
-        Self::init_transition::<S11>()
+        init_transition!(S11)
     }
 
     fn exit(&mut self) {
@@ -61,17 +56,17 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 self.sender.send(String::from("S1-HANDLES-A")).unwrap();
-                Self::handled()
+                handled!()
             },
             BasicEvt::C => {
                 self.sender.send(String::from("S1-HANDLES-C")).unwrap();
-                Self::transition::<S122>()
+                transition!(S122)
             },
             BasicEvt::E => {
                 self.sender.send(String::from("S1-HANDLES-E")).unwrap();
-                Self::transition::<S1>()
+                transition!(S1)
             }
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -91,13 +86,13 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 self.sender.send(String::from("S11-HANDLES-A")).unwrap();
-                Self::transition::<S121>()
+                transition!(S121)
             },
             BasicEvt::B => {
                 self.sender.send(String::from("S11-HANDLES-B")).unwrap();
-                Self::transition::<S12>()
+                transition!(S12)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -107,7 +102,7 @@ impl State<state_name> for BasicStateMachine{
     
     fn init(&mut self) -> InitResult<Self> {
         self.sender.send(String::from("S12-INIT")).unwrap(); 
-        Self::init_transition::<S121>()
+        init_transition!(S121)
     }
 
     fn exit(&mut self) {
@@ -122,13 +117,13 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::B => {
                 self.sender.send(String::from("S12-HANDLES-B")).unwrap();
-                Self::handled()
+                handled!()
             },
             BasicEvt::D => {
                 self.sender.send(String::from("S12-HANDLES-D")).unwrap();
-                Self::transition::<S121>()
+                transition!(S121)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -148,17 +143,17 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 self.sender.send(String::from("S121-HANDLES-A")).unwrap();
-                Self::transition::<S122>()
+                transition!(S122)
             },
             BasicEvt::B => {
                 self.sender.send(String::from("S121-HANDLES-B")).unwrap();
-                Self::transition::<S12>()
+                transition!(S12)
             },
             BasicEvt::C => {
                 self.sender.send(String::from("S121-HANDLES-C")).unwrap();
-                Self::transition::<S11>()
+                transition!(S11)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -179,17 +174,17 @@ impl State<state_name> for BasicStateMachine{
 
             BasicEvt::B => {
                 self.sender.send(String::from("S122-HANDLES-B")).unwrap();
-                Self::handled()
+                 handled!()
             },
             BasicEvt::C => {
                 self.sender.send(String::from("S122-HANDLES-C")).unwrap();
-                Self::transition::<S122>()
+                transition!(S122) 
             }, 
             BasicEvt::D => {
                 self.sender.send(String::from("S122-HANDLES-D")).unwrap();
-                Self::transition::<S1>()
+                transition!(S1)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }

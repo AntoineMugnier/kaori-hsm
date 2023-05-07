@@ -1,9 +1,5 @@
-use kaorust_core::HandleResult;
-use kaorust_core::InitResult;
-use kaorust_core::State;
-use kaorust_core::ProtoStateMachine;
-use kaorust_core::StateMachine;
-use kaorust_core::ParentState;
+use kaorust_core::*;
+
 // Evt definition
 enum BasicEvt{
 A,
@@ -19,7 +15,7 @@ impl ProtoStateMachine for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
       println!("TOP-INIT");  
-      Self::init_transition::<S0>()  
+      init_transition!(S0)  
     }
 }
 struct S0{} impl State<S0> for BasicStateMachine{
@@ -39,10 +35,10 @@ struct S0{} impl State<S0> for BasicStateMachine{
     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
         match evt{
             BasicEvt::A => {
-                println!("S0-HANDLES-A");
-                Self::transition::<S1>()
+              println!("S0-HANDLES-A");
+              transition!(S1)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -66,9 +62,9 @@ struct S1{} impl State<S1> for BasicStateMachine{
         match evt{
             BasicEvt::B => {
                 println!("S1-HANDLES-B");
-                Self::handled()
+                handled!()
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }

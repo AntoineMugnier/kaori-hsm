@@ -1,9 +1,4 @@
-use kaorust_core::HandleResult;
-use kaorust_core::InitResult;
-use kaorust_core::State;
-use kaorust_core::ProtoStateMachine;
-use kaorust_core::StateMachine;
-use kaorust_core::ParentState;
+use kaorust_core::*;
 use kaorust_derive::state;
 // Evt definition
 
@@ -32,7 +27,7 @@ impl ProtoStateMachine for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
       println!("TOP_INIT");  
-      Self::init_transition::<S1>()  
+      init_transition!(S11)
     }
 }
 
@@ -41,7 +36,7 @@ impl State<state_name> for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
         println!("S1-INIT");
-        Self::init_transition::<S11>()
+        init_transition!(S11)
     }
 
     fn exit(&mut self) {
@@ -56,17 +51,17 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 println!("S1-HANDLES-A");
-                Self::handled()
+                handled!()
             },
             BasicEvt::C => {
                 println!("S1-HANDLES-C");
-                Self::transition::<S122>()
+                transition!(S122)
             },
             BasicEvt::D => {
                 println!("S1-HANDLES-D");
-                Self::transition::<S1>()
+                transition!(S1)
             }
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -86,7 +81,7 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 println!("S11-HANDLES-A");
-                Self::transition::<S121>()
+                transition!(S121)
             },
             BasicEvt::B => {
                 println!("S11-HANDLES-B");
@@ -95,13 +90,13 @@ impl State<state_name> for BasicStateMachine{
                 
                 if self.a == 2{
                     self.a = 0;
-                    Self::transition::<S12>()
+                    transition!(S12)
                 }
                 else{
-                    Self::ignored()
+                    ignored!()
                 }
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -111,7 +106,7 @@ impl State<state_name> for BasicStateMachine{
     
     fn init(&mut self) -> InitResult<Self> {
         println!("S12-INIT"); 
-        Self::init_transition::<S121>()
+        init_transition!(S121)
     }
 
     fn exit(&mut self) {
@@ -126,13 +121,13 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::B => {
                 println!("S12-HANDLES-B");
-                Self::handled()
+                handled!()
             },
             BasicEvt::D => {
                 println!("S12-HANDLES-D");
-                Self::transition::<S121>()
+                transition!(S121)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -152,17 +147,17 @@ impl State<state_name> for BasicStateMachine{
         match evt{
             BasicEvt::A => {
                 println!("S121-HANDLES-A");
-                Self::transition::<S122>()
+                transition!(S122)
             },
             BasicEvt::B => {
                 println!("S121-HANDLES-B");
-                Self::transition::<S12>()
+                transition!(S12)
             },
             BasicEvt::C => {
                 println!("S121-HANDLES-C");
-                Self::transition::<S11>()
+                transition!(S11)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }
@@ -183,17 +178,17 @@ impl State<state_name> for BasicStateMachine{
 
             BasicEvt::B => {
                 println!("S122-HANDLES-B");
-                Self::handled()
+                handled!()
             },
             BasicEvt::C => {
                 println!("S122-HANDLES-C");
-                Self::transition::<S122>()
+                transition!(S122)
             }, 
             BasicEvt::D => {
                 println!("S122-HANDLES-D");
-                Self::transition::<S1>()
+                transition!(S1)
             },
-            _ => Self::ignored()
+            _ => ignored!()
         }
     }    
 }

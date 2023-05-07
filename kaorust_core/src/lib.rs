@@ -35,3 +35,26 @@ pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;
 pub use state_machine::StateMachine;
 
+#[macro_export]
+macro_rules! init_transition {
+    ($target_state_tag:ident) => {
+        InitResult::TargetState(State::<$target_state_tag>::core_handle) 
+    }
+}
+
+#[macro_export]
+macro_rules! transition {
+    ($target_state_tag:ident) => {
+        HandleResult::Transition(State::<$target_state_tag>::core_handle) 
+    }
+}
+
+#[macro_export]
+macro_rules! ignored {
+    () => {HandleResult::Ignored}
+}
+
+#[macro_export]
+macro_rules! handled {
+    () => {HandleResult::Handled}
+}
