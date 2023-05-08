@@ -2,7 +2,7 @@
 //! embedded system. It can also be used safely on and desktop computers.  
 //!
 //!# Performance
-//! The framework is designed to be lightweight, holding just a few kilobytes in memory.
+//! The framework is designed to be lightweight,usually  holding just a few kilobytes in memory.
 //! It also has the advantages of being free of dynamic allocation and of virtual tables.
 //! 
 //! To build your own state machine, you first have to define the structure that will hold its
