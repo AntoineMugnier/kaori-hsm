@@ -31,8 +31,8 @@ impl ProtoStateMachine for BasicStateMachine{
     }
 }
 
-#[state(state_name= S1, super_state_name= Top)]
-impl State<state_name> for BasicStateMachine{
+#[state(super_state= Top)]
+impl State<S1> for BasicStateMachine{
 
     fn init(&mut self) -> InitResult<Self> {
         println!("S1-INIT");
@@ -66,8 +66,8 @@ impl State<state_name> for BasicStateMachine{
     }    
 }
 
-#[state(state_name= S11, super_state_name= S1)]
-impl State<state_name> for BasicStateMachine{
+#[state(super_state= S1)]
+impl State<S11> for BasicStateMachine{
     
     fn exit(&mut self) {
         println!("S11-EXIT"); 
@@ -101,8 +101,8 @@ impl State<state_name> for BasicStateMachine{
     }    
 }
 
-#[state(state_name= S12, super_state_name= S1)]
-impl State<state_name> for BasicStateMachine{
+#[state(super_state= S1)]
+impl State<S12> for BasicStateMachine{
     
     fn init(&mut self) -> InitResult<Self> {
         println!("S12-INIT"); 
@@ -132,8 +132,8 @@ impl State<state_name> for BasicStateMachine{
     }    
 }
 
-#[state(state_name= S121, super_state_name= S12)]
-impl State<state_name> for BasicStateMachine{
+#[state(super_state= S12)]
+impl State<S121> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S121-EXIT"); 
@@ -162,8 +162,8 @@ impl State<state_name> for BasicStateMachine{
     }    
 }
 
-#[state(state_name= S122, super_state_name= S12)]
-impl State<state_name> for BasicStateMachine{
+#[state(super_state= S12)]
+impl State<S122> for BasicStateMachine{
 
     fn exit(&mut self) {
         println!("S122-EXIT"); 

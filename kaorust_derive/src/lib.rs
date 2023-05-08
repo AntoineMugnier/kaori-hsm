@@ -9,73 +9,64 @@ pub fn state(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> pr
 }
 
 struct AttrStateDecl{
-    state_name : syn::Ident,
-    super_state_name : syn::Ident
+    super_state_tag : syn::Ident
 }
 
 impl Parse for AttrStateDecl{
 
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    let state_name;
-    let super_state_name;
+    let super_state_tag;
 
-        let attr_name = input.parse::<syn::Ident>()?;
-        
-    match attr_name.to_string().as_str(){
-           "state_name" => {
-                input.parse::<Token![=]>()?;
-                state_name = input.parse::<syn::Ident>()?;
-            }
-             _ => { return Err(syn::Error::new(attr_name.span(), "expected field `name`"))}
-        }
-
-    input.parse::<Token![,]>()?;
-    
         let attr_name = input.parse::<syn::Ident>()?;
 
         match attr_name.to_string().as_str(){
-           "super_state_name" => {
+           "super_state" => {
                 input.parse::<Token![=]>()?;
-                super_state_name = input.parse::<syn::Ident>()?;
+                super_state_tag = input.parse::<syn::Ident>()?;
             }
              _ => { return Err(syn::Error::new(attr_name.span(), "expected field `super_state_name`"))}
         }
 
         Ok(AttrStateDecl{
-            state_name,
-            super_state_name
+            super_state_tag
         })
     }
 }
-struct Visitor{
-    ident_to_replace : Ident,
-    new_ident : Ident
-}
-impl VisitMut for Visitor{
-    fn visit_ident_mut(&mut self, node: &mut Ident){
-        if node.to_string() == self.ident_to_replace.to_string(){
-            *node = self.new_ident.clone();
-        } 
-    }
+
+fn get_user_state_tag_from_item_impl_ast(item_impl_ast : &ItemImpl) -> Ident{
+   
+    let item_ast_trait = item_impl_ast.trait_.clone().unwrap().1;
+
+    for segment in item_ast_trait.segments{
+        if segment.ident.to_string() == "State" {
+           if let syn::PathArguments::AngleBracketed(generic_arguments) = segment.arguments{
+               let first_generic_argument = generic_arguments.args.first().unwrap();
+                if let syn::GenericArgument::Type(first_generic_argument) = first_generic_argument{
+                    if let syn::Type::Path(first_generic_argument) = first_generic_argument{
+                        let first_generic_argument_ident = first_generic_argument.path.segments[0].ident.clone();
+                        return first_generic_argument_ident 
+                    }            
+                } 
+            }
+        }
+    }  
+    panic!()
 }
 
 pub(crate) fn state_impl(args: TokenStream, item: TokenStream)-> TokenStream{
      
+    // Get the tag of the super state
     let attr_ast : AttrStateDecl = syn::parse2(args).unwrap();
+    let super_state_tag_ident = attr_ast.super_state_tag;
+   
+    // Get the tag of the current state
     let mut item_ast : ItemImpl = syn::parse2(item).unwrap();
-    
-    let user_state_ident = attr_ast.state_name;
-    
-    let super_user_state_ident = attr_ast.super_state_name;
-    
-    let ident_to_replace = Ident::new("state_name",Span::call_site());
-    
-    let mut visitor = Visitor{ident_to_replace, new_ident: user_state_ident.clone()};
-    visitor.visit_item_impl_mut(&mut item_ast);
-    
+    let user_state_tag_ident = get_user_state_tag_from_item_impl_ast(&item_ast);
+
+    // Create the function that will return the fn pointer to the super state
     let get_super_state_fn: syn::ImplItemFn;
     
-    if super_user_state_ident.to_string() == "Top"{
+    if super_state_tag_ident.to_string() == "Top"{
     
         get_super_state_fn = syn::parse2( 
         quote!(
@@ -90,18 +81,19 @@ pub(crate) fn state_impl(args: TokenStream, item: TokenStream)-> TokenStream{
          get_super_state_fn  = syn::parse2( 
             quote!(
                 fn get_parent_state() -> ParentState<Self> {
-                    ParentState::Exists(State::<#super_user_state_ident>::core_handle)        
+                    ParentState::Exists(State::<#super_state_tag_ident>::core_handle)        
                 }
             )
         ).unwrap();
     }
 
    let get_super_state_impl_item_fn = syn::ImplItem::Fn(get_super_state_fn); 
+
+    // Push the function into the impl item AST
     item_ast.items.push(get_super_state_impl_item_fn);
     
-    //panic!("{:?}", item_ast.items[0]);
-    
-    quote! {struct #user_state_ident{ } #item_ast}.into()
+   // Generate code from the item impl AST 
+    quote! {struct #user_state_tag_ident{ } #item_ast}.into()
 
 }
 
@@ -111,14 +103,14 @@ use std::str::FromStr;
 use super::*;
 
 #[test]
-fn test_just_for_fn() {
-    let attr = "state_name = S1, super_state_name = Top";
-    let item = "impl State<state_name> for UserStateMachine{ }";
+fn test_state_impl() {
+    let attr = "super_state = Top";
+    let item = "impl kaorust_core::State<StateName> for UserStateMachine{ }";
     
     let attr_tokens = TokenStream::from_str(attr).unwrap();
     let item_tokens = TokenStream::from_str(item).unwrap();
-
+    let expected_str = "struct StateName { } impl kaorust_core :: State < StateName > for UserStateMachine { fn get_parent_state () -> ParentState < Self > { ParentState :: TopReached } }";
     let res = crate::state_impl(attr_tokens, item_tokens);
-    panic!("{}", res.to_string());
+    assert_eq!(expected_str, res.to_string());
    }
 }

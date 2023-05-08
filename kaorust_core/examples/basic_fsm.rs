@@ -21,7 +21,7 @@ impl ProtoStateMachine for BasicStateMachine{
 }
 
 
-#[state(state_name= S0, super_state_name= Top)]
+#[state(super_state= Top)]
 impl State<S0> for BasicStateMachine{
 
     fn exit(&mut self) {
@@ -43,7 +43,7 @@ impl State<S0> for BasicStateMachine{
     }    
 }
 
-#[state(state_name= S1, super_state_name= Top)]
+#[state(super_state= Top)]
 impl State<S1> for BasicStateMachine{
 
     fn exit(&mut self) {
