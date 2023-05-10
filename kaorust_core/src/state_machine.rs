@@ -1,7 +1,8 @@
 use crate::proto_state_machine::ProtoStateMachine;
 use crate::state::{CoreEvt, ParentState, InitResult, CoreHandleResult, StateFn};
 
-
+/// Type which ensapsulates most of the Kaorust state machine logic. An instance of this structure must be built from an instance of a  user-defines structure on which has been implemented the `ProtoStateMachine` and `State` traits.
+/// Hence, an instance of this structure is a completely autonomous state machine mixing both user and library code. 
 pub struct StateMachine<UserStateMachine: ProtoStateMachine>{
     user_state_machine : UserStateMachine,
     curr_state :StateFn<UserStateMachine>
@@ -17,11 +18,45 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
    fn default_state(_user_sm: &mut UserStateMachine, _evt: &CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>) -> CoreHandleResult<UserStateMachine>{
         panic!("dispatch() function called on state_machine before init")
     } 
-
+    
+    /// Build the Kaorust state machine from you structure which implements the `ProtoStateMachine` trait and as many variants
+    /// of the `State` trait as you have states.
     pub fn from(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
     
         StateMachine{user_state_machine, curr_state : Self::default_state}
     }
+
+    /// Will trigger the initial transition of the state machine by calling
+    /// `ProtoStateMachine::top_init`. That call willl lead to the first state of the machine to be
+    /// set.
+    pub fn init(&mut self){
+
+        let user_state_machine = &mut self.user_state_machine;
+        // Call user top initial pseudostate implementation
+        let init_result = user_state_machine.init();
+        match init_result{
+            InitResult::TargetState(topmost_init_target_state_fn) =>{
+                // Reach leaf state
+                Self::dispatch_entry_evt(user_state_machine, topmost_init_target_state_fn);
+
+                self.reach_init_target(topmost_init_target_state_fn);
+            }
+
+            InitResult::NotImplemented =>  panic!("Topmost Init should return a state")
+        }
+    }
+    
+    /// Dispatch an event of the type you have attributed to `ProtoStateMachine::Evt`.
+    /// The `dispatch()` method should only be called after `init()`, otherwise the framework will
+    /// panic
+    pub fn dispatch(&mut self, user_evt : &<UserStateMachine as ProtoStateMachine>::Evt){
+
+        // Dispatch user evt to current state 
+        let evt = CoreEvt::UserEvt {user_evt};
+        let current_state_fn = self.curr_state;
+        self.dispatch_core_event(current_state_fn, &evt);
+   }
+
 
     fn dispatch_entry_evt(user_state_machine : &mut UserStateMachine, state_fn : StateFn<UserStateMachine>){
         let entry_evt = CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>::EntryEvt;
@@ -66,25 +101,7 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         
         self.curr_state = current_target_state_fn;
     }
-
-    pub fn init(&mut self){
-
-        let user_state_machine = &mut self.user_state_machine;
-        // Call user top initial pseudostate implementation
-        let init_result = user_state_machine.init();
-        match init_result{
-            InitResult::TargetState(topmost_init_target_state_fn) =>{
-                // Reach leaf state
-                Self::dispatch_entry_evt(user_state_machine, topmost_init_target_state_fn);
-
-                self.reach_init_target(topmost_init_target_state_fn);
-            }
-
-            InitResult::NotImplemented =>  panic!("Topmost Init should return a state")
-        }
-    }
-   
-
+    
     fn handle_ignored_evt(&mut self, parent_state_variant : ParentState<UserStateMachine>,evt : &CoreEvt::<<UserStateMachine as ProtoStateMachine>::Evt>){
         match parent_state_variant{
             ParentState::Exists(super_state) => self.dispatch_core_event(super_state, evt),
@@ -222,12 +239,5 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
         }
     }
 
-    pub fn dispatch(&mut self, user_evt : &<UserStateMachine as ProtoStateMachine>::Evt){
-
-        // Dispatch user evt to current state 
-        let evt = CoreEvt::UserEvt {user_evt};
-        let current_state_fn = self.curr_state;
-        self.dispatch_core_event(current_state_fn, &evt);
-   }
-
+    
 }

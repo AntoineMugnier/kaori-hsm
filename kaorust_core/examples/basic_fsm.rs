@@ -1,5 +1,4 @@
 use kaorust_core::*;
-use kaorust_derive::*;
 
 // Evt definition
 enum BasicEvt{

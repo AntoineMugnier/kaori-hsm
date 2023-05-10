@@ -39,7 +39,83 @@ pub enum CoreEvt<'a, UserEvtT>{
 /// The `tag` argument, which corresponds to the state name, has no other purpose than to create a
 /// unique variant of this trait for the specific state to implement. If the `#[state()]`
 /// procedural macro is used, the tag is automatically defined by parsing the state implementation.
-/// 
+/// # Example
+/// ```
+///# use kaorust_core::*;
+///#
+///# enum BasicEvt{
+///# A,
+///# B,
+///# C,
+///# D
+///# }
+///#
+///# struct BasicStateMachine{
+///# }
+///#
+///#
+///# impl ProtoStateMachine for BasicStateMachine{
+///#   type Evt = BasicEvt;
+///#
+///#   fn init(&mut self) -> InitResult<Self> {
+///#     println!("TOP_INIT");
+///#    init_transition!(S1)  
+///#   }
+///# }
+///#
+///#
+///#[state(super_state= Top)]
+///impl State<S0> for BasicStateMachine{
+///
+///    fn init(&mut self) -> InitResult<Self> {
+///        println!("S0-INIT");
+///        init_transition!(S1)
+///    }
+///
+///    fn exit(&mut self) {
+///        println!("S0-EXIT"); 
+///    }
+///
+///    fn entry(&mut self) {
+///        println!("S0-ENTRY"); 
+///    }
+///
+///    fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+///        match evt{
+///            BasicEvt::A => {
+///                println!("S0-HANDLES-A");
+///                handled!()
+///            },
+///            BasicEvt::B => {
+///                println!("S0-HANDLES-D");
+///                transition!(S1)
+///           },
+///           _ => ignored!()
+///        }
+///    }    
+///}
+///# #[state(super_state= S0)]
+///# impl State<S1> for BasicStateMachine{
+///# 
+///#     fn exit(&mut self) {
+///#         println!("S1-EXIT"); 
+///#     }
+///# 
+///#     fn entry(&mut self) {
+///#         println!("S1-ENTRY"); 
+///#     }
+///# 
+///#     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+///#         match evt{
+///#             BasicEvt::A => {
+///#                 println!("S1-HANDLES-A");
+///#                 handled!()
+///#             },
+///#              _ => ignored!()
+///#         }
+///#     }    
+///# }
+/// ```
 /// *Note: It is recommended to use the `#[state()]` procedural macro before the state implementation
 /// in order to limit code verbosity.*
 pub trait State<T>
@@ -61,7 +137,6 @@ where Self : ProtoStateMachine{
     /// All non-leaf state must implement this method, otherwise a panic will occur when
     /// a transition for which this state is the target executes.
     /// The implemented method must return only the `TargetState` variant of the enum `InitResult` containing the target substate.
-    /// 
     /// *Note: It is recommended to use the `ìnit_transition!()` macro for returning the target
     /// substate.* 
     fn init(&mut self) -> InitResult<Self>{
@@ -69,17 +144,16 @@ where Self : ProtoStateMachine{
     }
     
     /// Executed when the state machine enters the present state during a transition.
-    ///
-    /// # Implementation policy
+    ///# Implementation policy
     /// The implementation of this method is optional
     ///
     fn entry(&mut self){
         // No implementation
     }
     
-    /// Executed when the state machine enters the present state during a transition.
+    /// Executed when the state machine exits the present state during a transition.
     ///
-    /// # Implementation policy
+    ///# Implementation policy
     /// The implementation of this method is optional
     fn exit(&mut self){
         // No implementation
@@ -98,9 +172,7 @@ where Self : ProtoStateMachine{
     /// In the case the event does not match any expected event, `HandleResult::Ignored` must be
     /// returned. In this case, `handle()` methods of upper states will be called with the ignored
     /// event.
-    /// 
-    /// *Note: Its is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead of assembling manually the enum variant of `HandleResult`* 
-
+    // *Note: Its is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead of assembling manually the enum variant of `HandleResult`* 
     fn handle(&mut self, evt:&<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
     
     #[doc(hidden)]

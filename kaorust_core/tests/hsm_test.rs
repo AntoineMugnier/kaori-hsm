@@ -4,7 +4,6 @@ use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::channel;
 
 use kaorust_core::*;
-use kaorust_derive::state;
 
 // Evt definition
 #[derive(Debug)] 
@@ -25,7 +24,6 @@ impl BasicStateMachine{
         BasicStateMachine {sender}
     }
 }
-//type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
 impl ProtoStateMachine for BasicStateMachine{
     type Evt = BasicEvt;

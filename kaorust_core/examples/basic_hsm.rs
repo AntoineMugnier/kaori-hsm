@@ -1,5 +1,4 @@
 use kaorust_core::*;
-use kaorust_derive::state;
 // Evt definition
 
 use rand::Rng;

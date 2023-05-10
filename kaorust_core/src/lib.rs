@@ -34,27 +34,29 @@ mod state_machine;
 pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;
 pub use state_machine::StateMachine;
+extern crate kaorust_derive;
+pub use kaorust_derive::state;
 
 #[macro_export]
 macro_rules! init_transition {
     ($target_state_tag:ident) => {
-        InitResult::TargetState(State::<$target_state_tag>::core_handle) 
+        kaorust_core::InitResult::TargetState(State::<$target_state_tag>::core_handle) 
     }
 }
 
 #[macro_export]
 macro_rules! transition {
     ($target_state_tag:ident) => {
-        HandleResult::Transition(State::<$target_state_tag>::core_handle) 
+        kaorust_core::HandleResult::Transition(State::<$target_state_tag>::core_handle) 
     }
 }
 
 #[macro_export]
 macro_rules! ignored {
-    () => {HandleResult::Ignored}
+    () => {kaorust_core::HandleResult::Ignored}
 }
 
 #[macro_export]
 macro_rules! handled {
-    () => {HandleResult::Handled}
+    () => {kaorust_core::HandleResult::Handled}
 }
