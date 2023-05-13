@@ -121,7 +121,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 /// ```
 /// *Note: It is recommended to use the `#[state()]` procedural macro before the state implementation
 /// in order to limit code verbosity.*
-pub trait State<T>
+pub trait State<Tag>
 where
     Self: ProtoStateMachine,
 {
@@ -186,20 +186,20 @@ where
     ) -> CoreHandleResult<Self> {
         match evt {
             CoreEvt::InitEvt => {
-                return CoreHandleResult::InitResult(<Self as State<T>>::init(self));
+                return CoreHandleResult::InitResult(<Self as State<Tag>>::init(self));
             }
             CoreEvt::EntryEvt => {
-                <Self as State<T>>::entry(self);
+                <Self as State<Tag>>::entry(self);
                 return CoreHandleResult::Handled;
             }
             CoreEvt::ExitEvt => {
-                <Self as State<T>>::exit(self);
+                <Self as State<Tag>>::exit(self);
                 return CoreHandleResult::Handled;
             }
             CoreEvt::GetParentStateEvt => {
                 return CoreHandleResult::GetParentStateResult(Self::get_parent_state());
             }
-            CoreEvt::UserEvt { user_evt } => match <Self as State<T>>::handle(self, user_evt) {
+            CoreEvt::UserEvt { user_evt } => match <Self as State<Tag>>::handle(self, user_evt) {
                 HandleResult::Ignored => return CoreHandleResult::Ignored(Self::get_parent_state()),
                 HandleResult::Handled => return CoreHandleResult::Handled,
                 HandleResult::Transition(state_fn) => CoreHandleResult::Transition(state_fn),
