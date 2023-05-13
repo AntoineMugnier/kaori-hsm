@@ -1,8 +1,8 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::state::{CoreEvt, ParentState, InitResult, CoreHandleResult, StateFn};
+use crate::state::{State, CoreEvt, ParentState, InitResult, CoreHandleResult, StateFn};
 
-/// Type which ensapsulates most of the Kaorust state machine logic. An instance of this structure must be built from an instance of a  user-defines structure on which has been implemented the `ProtoStateMachine` and `State` traits.
-/// Hence, an instance of this structure is a completely autonomous state machine mixing both user and library code. 
+/// Type representing a completely functional state machine.
+/// Built using [`StateMachine::from()`] from an instance of a  user-defined structure on which has been implemented the `ProtoStateMachine` and `State` traits.
 pub struct StateMachine<UserStateMachine: ProtoStateMachine>{
     user_state_machine : UserStateMachine,
     curr_state :StateFn<UserStateMachine>
@@ -20,15 +20,16 @@ impl <UserStateMachine : ProtoStateMachine>StateMachine<UserStateMachine>{
     } 
     
     /// Build the Kaorust state machine from you structure which implements the `ProtoStateMachine` trait and as many variants
-    /// of the `State` trait as you have states.
+    /// of the [`State<tag>`] trait as you have states.
     pub fn from(user_state_machine : UserStateMachine) -> StateMachine<UserStateMachine>{
     
         StateMachine{user_state_machine, curr_state : Self::default_state}
     }
 
-    /// Will trigger the initial transition of the state machine by calling
-    /// `ProtoStateMachine::top_init`. That call willl lead to the first state of the machine to be
-    /// set.
+    /// Will trigger the execution of the initial pseudostate of the state machine by calling
+    /// `ProtoStateMachine::init`. That call willl lead to the first state of the machine to be
+    /// set.   
+    /// This method should only be called once
     pub fn init(&mut self){
 
         let user_state_machine = &mut self.user_state_machine;

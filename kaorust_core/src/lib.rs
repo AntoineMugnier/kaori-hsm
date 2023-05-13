@@ -70,16 +70,16 @@ pub use kaorust_derive::state;
 ///             }
 ///         }
 ///     }    
-/// 
-///#[state(super_state= Top)]
-///impl State<S1> for BasicStateMachine{
-/// 
-///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
-///         match evt{
-///             _ => ignored!()
-///             }
-///         }
-/// }
+///#  
+///# #[state(super_state= Top)]
+///# impl State<S1> for BasicStateMachine{
+///#  
+///#      fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+///#          match evt{
+///#              _ => ignored!()
+///#              }
+///#          }
+///#  }
 ///```
 #[macro_export]
 macro_rules! init_transition {
