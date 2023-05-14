@@ -1,5 +1,4 @@
 #![doc = include_str!("../../README.md")]
-
 mod proto_state_machine;
 mod state;
 mod state_machine;
