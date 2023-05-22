@@ -18,7 +18,7 @@ impl ProtoStateMachine for BasicStateMachine {
         init_transition!(S0)
     }
 }
-
+/// Example 
 #[state(super_state= Top)]
 impl State<S0> for BasicStateMachine {
     fn exit(&mut self) {

@@ -30,6 +30,7 @@ impl BasicStateMachine{
         self.sender.send(String::from(s)).unwrap();
     }
 }
+
 impl ProtoStateMachine for BasicStateMachine {
     type Evt = BasicEvt;
 

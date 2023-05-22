@@ -1,4 +1,181 @@
-#![doc = include_str!("../../README.md")]
+//! # Kaorust State machine framework 
+//! Kaorust is an Hierarchical State Machine (HSM) framework developed in Rust, at destination of
+//! embedded systems and desktop computers. It can be used to create behavioural components of an
+//! application as fast and lightweight hierarchical state machines.
+//!
+//!# What are Hierarchical state machines ?
+//!
+//! ## Performance
+//! The framework is designed to be lightweight, holding just a few kilobytes in memory.
+//! It also has the advantages of being free of dynamic allocation and of virtual tables.
+//! That makes the framework very suitable for developping firmware on embedded systems,
+//! a target for which it was primarly designed.
+//!
+//! ## How to
+//! To build your own state machine, you first have to define the structure that will hold its
+//! data and then you will need to implement the following traits of the framework on it: the [`ProtoStateMachine`]
+//! trait and as many variant of the [`State<Tag>`] trait as you want to define states.
+//!
+//! After that, you will assemble a complete `StateMachine` by sending an instance of your structure which
+//! implements the mentioned traits as argument to the [`StateMachine::from()`] function.
+//! 
+//! After having been intialized by a call to the [`StateMachine::init()`] method, the state
+//! machine is ready to receive events through calls to the [`StateMachine::dispatch()`] method
+//!```rust
+//! use std::sync::mpsc::channel;
+//! use std::sync::mpsc::Receiver;
+//! use std::sync::mpsc::Sender;
+//! use std::sync::mpsc::TryRecvError;
+//! use kaorust_core::*; 
+//! enum BasicEvt{
+//!     A,
+//!     B,
+//!     C
+//! }
+//!
+//! struct BasicStateMachine{
+//!    sender: Sender<String>,
+//! }
+//!
+//! impl BasicStateMachine{
+//!     pub fn new(sender: Sender<String>) -> BasicStateMachine {
+//!        BasicStateMachine { sender }
+//!    }
+//!
+//!     fn post_string(&self, s : &str){
+//!         self.sender.send(String::from(s)).unwrap();
+//!     }
+//! }
+//!
+//! impl ProtoStateMachine for BasicStateMachine{
+//!   type Evt = BasicEvt;
+//!
+//!   fn init(&mut self) -> InitResult<Self> {
+//!       self.post_string("TOP_INIT"); 
+//!       init_transition!(S1)
+//!   }
+//! }
+//!
+//! #[state(super_state= Top)]
+//! impl State<S1> for BasicStateMachine{
+//!
+//!     fn init(&mut self) -> InitResult<Self> {
+//!         self.post_string("S1-INIT");
+//!         init_transition!(S11)
+//!     }
+//!
+//!     fn entry(&mut self) {
+//!        self.post_string("S1-ENTRY");
+//!     }
+//!
+//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!         match evt{
+//!             BasicEvt::A => {
+//!                 self.post_string("S1-HANDLES-A");
+//!                 handled!()
+//!             }
+//!             BasicEvt::C =>{
+//!                 self.post_string("S1-HANDLES-C");
+//!                 transition!(S2)
+//!             }
+//!             _ => ignored!()
+//!         }
+//!     }
+//! }    
+//!  
+//! #[state(super_state= S1)]
+//! impl State<S11> for BasicStateMachine{
+//!
+//!     fn exit(&mut self) {
+//!        self.post_string("S11-EXIT");
+//!     }
+//!
+//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!         match evt{
+//!             BasicEvt::B => {
+//!                  self.post_string("S11-HANDLES-B");
+//!                  transition!(S2)
+//!             }
+//!             _ => ignored!()
+//!         }
+//!     }
+//! }
+//!
+//!#[state(super_state= Top)]
+//! impl State<S2> for BasicStateMachine{
+//!
+//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!         match evt{
+//!            BasicEvt::A => {
+//!                 self.post_string("S2-HANDLES-A");
+//!                 transition!(S1)
+//!             }
+//!            BasicEvt::B => {
+//!                 self.post_string("S2-HANDLES-B");
+//!                 handled!()
+//!             }
+//!             _ => ignored!()
+//!         }
+//!     }
+//! }
+//!
+//! fn collect_sm_output(receiver: &Receiver<String>) -> String {
+//!     receiver.try_recv().unwrap_or_else(|err| match err {
+//!         TryRecvError::Empty => panic!("Too many expectations for the SM output"),
+//!         TryRecvError::Disconnected => panic!("Disconnected"),
+//!     })
+//! }
+//! 
+//! fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
+//!     for (index, &expectation) in expectations.iter().enumerate() {
+//!         let sm_output = collect_sm_output(receiver);
+//!         if expectation != sm_output {
+//!             panic!(
+//!                 "Expectation index {},  expected : {},  got: {}",
+//!                 index, expectation, sm_output
+//!             )
+//!         }
+//!     }
+//! 
+//!     // Check that we have expected all the output of the SM
+//!     match receiver.try_recv().err() {
+//!         Some(TryRecvError::Empty) => { /* OK */ }
+//!         Some(TryRecvError::Disconnected) => {
+//!             panic!(" Sender is dead")
+//!         }
+//!         None => {
+//!             panic!("Too few expectations for the SM output")
+//!         }
+//!     }
+//! }
+//!
+//!     let (sender, mut receiver) = channel();
+//! 
+//!     let basic_state_machine = BasicStateMachine::new(sender);
+//! 
+//!     let mut sm = StateMachine::from(basic_state_machine);
+//!    
+//!    sm.init();
+//!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT"]);
+//!    
+//!    sm.dispatch(&BasicEvt::A);
+//!    expect_output_series(&receiver, &["S1-HANDLES-A"]);
+//!    
+//!    sm.dispatch(&BasicEvt::B);
+//!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT"]);
+//!
+//!    sm.dispatch(&BasicEvt::B);
+//!    expect_output_series(&receiver, &["S2-HANDLES-B"]);
+//!
+//!    sm.dispatch(&BasicEvt::A);
+//!    expect_output_series(&receiver, &["S2-HANDLES-A", "S1-ENTRY", "S1-INIT"]);
+//!    
+//!    sm.dispatch(&BasicEvt::B);
+//!    expect_output_series(&receiver, &["S1-HANDLES-B", "S11-EXIT"]);
+//!
+//!```
+
+
 mod proto_state_machine;
 mod state;
 mod state_machine;
