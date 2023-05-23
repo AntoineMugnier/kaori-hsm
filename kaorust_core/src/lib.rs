@@ -170,8 +170,8 @@
 //!    sm.dispatch(&BasicEvt::A);
 //!    expect_output_series(&receiver, &["S2-HANDLES-A", "S1-ENTRY", "S1-INIT"]);
 //!    
-//!    sm.dispatch(&BasicEvt::B);
-//!    expect_output_series(&receiver, &["S1-HANDLES-B", "S11-EXIT"]);
+//!    sm.dispatch(&BasicEvt::C);
+//!    expect_output_series(&receiver, &["S1-HANDLES-C", "S11-EXIT"]);
 //!
 //!```
 
