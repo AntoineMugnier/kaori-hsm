@@ -274,6 +274,8 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
             self.curr_state,
             handling_state_fn,
         );
+        
+        self.curr_state = handling_state_fn;
 
         // Special handling in case of targetting the current state
         if handling_state_fn as *const fn() == target_state_fn as *const fn() {

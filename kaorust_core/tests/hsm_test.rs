@@ -13,6 +13,7 @@ enum BasicEvt {
     C,
     D,
     E,
+    F
 }
 
 struct BasicStateMachine {
@@ -25,17 +26,11 @@ impl BasicStateMachine {
     }
 }
 
-impl BasicStateMachine{
-    fn post_string(&self, s : &str){
-        self.sender.send(String::from(s)).unwrap();
-    }
-}
-
 impl ProtoStateMachine for BasicStateMachine {
     type Evt = BasicEvt;
 
     fn init(&mut self) -> InitResult<Self> {
-        self.post_string("TOP_INIT");
+        self.sender.send(String::from("TOP_INIT")).unwrap();
         init_transition!(S1)
     }
 }
@@ -43,30 +38,30 @@ impl ProtoStateMachine for BasicStateMachine {
 #[state(super_state = Top)]
 impl State<S1> for BasicStateMachine {
     fn init(&mut self) -> InitResult<Self> {
-        self.post_string("S1-INIT");
+        self.sender.send(String::from("S1-INIT")).unwrap();
         init_transition!(S11)
     }
 
     fn exit(&mut self) {
-        self.post_string("S1-EXIT");
+        self.sender.send(String::from("S1-EXIT")).unwrap();
     }
 
     fn entry(&mut self) {
-        self.post_string("S1-ENTRY");
+        self.sender.send(String::from("S1-ENTRY")).unwrap();
     }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
             BasicEvt::A => {
-                self.post_string("S1-HANDLES-A");
+                self.sender.send(String::from("S1-HANDLES-A")).unwrap();
                 handled!()
             }
             BasicEvt::C => {
-                self.post_string("S1-HANDLES-C");
+                self.sender.send(String::from("S1-HANDLES-C")).unwrap();
                 transition!(S122)
             }
-            BasicEvt::E => {
-                self.post_string("S1-HANDLES-E");
+            BasicEvt::F => {
+                self.sender.send(String::from("S1-HANDLES-F")).unwrap();
                 transition!(S1)
             }
             _ => ignored!(),
@@ -77,21 +72,21 @@ impl State<S1> for BasicStateMachine {
 #[state(super_state = S1)]
 impl State<S11> for BasicStateMachine {
     fn exit(&mut self) {
-        self.post_string("S11-EXIT");
+        self.sender.send(String::from("S11-EXIT")).unwrap();
     }
 
     fn entry(&mut self) {
-        self.post_string("S11-ENTRY");
+        self.sender.send(String::from("S11-ENTRY")).unwrap();
     }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
             BasicEvt::A => {
-                self.post_string("S11-HANDLES-A");
+                self.sender.send(String::from("S11-HANDLES-A")).unwrap();
                 transition!(S121)
             }
             BasicEvt::B => {
-                self.post_string("S11-HANDLES-B");
+                self.sender.send(String::from("S11-HANDLES-B")).unwrap();
                 transition!(S12)
             }
             _ => ignored!(),
@@ -102,27 +97,31 @@ impl State<S11> for BasicStateMachine {
 #[state(super_state = S1)]
 impl State<S12> for BasicStateMachine {
     fn init(&mut self) -> InitResult<Self> {
-        self.post_string("S12-INIT");
+        self.sender.send(String::from("S12-INIT")).unwrap();
         init_transition!(S121)
     }
 
     fn exit(&mut self) {
-        self.post_string("S12-EXIT");
+        self.sender.send(String::from("S12-EXIT")).unwrap();
     }
 
     fn entry(&mut self) {
-        self.post_string("S12-ENTRY");
+        self.sender.send(String::from("S12-ENTRY")).unwrap();
     }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
             BasicEvt::B => {
-                self.post_string("S12-HANDLES-B");
+                self.sender.send(String::from("S12-HANDLES-B")).unwrap();
                 handled!()
             }
             BasicEvt::D => {
-                self.post_string("S12-HANDLES-D");
+                self.sender.send(String::from("S12-HANDLES-D")).unwrap();
                 transition!(S121)
+            }
+            BasicEvt::E =>{
+                self.sender.send(String::from("S12-HANDLES-E")).unwrap();
+                transition!(S11)
             }
             _ => ignored!(),
         }
@@ -132,25 +131,25 @@ impl State<S12> for BasicStateMachine {
 #[state(super_state = S12)]
 impl State<S121> for BasicStateMachine {
     fn exit(&mut self) {
-        self.post_string("S121-EXIT");
+        self.sender.send(String::from("S121-EXIT")).unwrap();
     }
 
     fn entry(&mut self) {
-        self.post_string("S121-ENTRY");
+        self.sender.send(String::from("S121-ENTRY")).unwrap();
     }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
             BasicEvt::A => {
-                self.post_string("S121-HANDLES-A");
+                self.sender.send(String::from("S121-HANDLES-A")).unwrap();
                 transition!(S122)
             }
             BasicEvt::B => {
-                self.post_string("S121-HANDLES-B");
+                self.sender.send(String::from("S121-HANDLES-B")).unwrap();
                 transition!(S12)
             }
             BasicEvt::C => {
-                self.post_string("S121-HANDLES-C");
+                self.sender.send(String::from("S121-HANDLES-C")).unwrap();
                 transition!(S11)
             }
             _ => ignored!(),
@@ -160,25 +159,25 @@ impl State<S121> for BasicStateMachine {
 #[state(super_state = S12)]
 impl State<S122> for BasicStateMachine {
     fn exit(&mut self) {
-        self.post_string("S122-EXIT");
+        self.sender.send(String::from("S122-EXIT")).unwrap();
     }
 
     fn entry(&mut self) {
-        self.post_string("S122-ENTRY");
+        self.sender.send(String::from("S122-ENTRY")).unwrap();
     }
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
             BasicEvt::B => {
-                self.post_string("S122-HANDLES-B");
+                self.sender.send(String::from("S122-HANDLES-B")).unwrap();
                 handled!()
             }
             BasicEvt::C => {
-                self.post_string("S122-HANDLES-C");
+                self.sender.send(String::from("S122-HANDLES-C")).unwrap();
                 transition!(S122)
             }
             BasicEvt::D => {
-                self.post_string("S122-HANDLES-D");
+                self.sender.send(String::from("S122-HANDLES-D")).unwrap();
                 transition!(S1)
             }
             _ => ignored!(),
@@ -309,25 +308,48 @@ fn hsm_test() {
             "S121-ENTRY",
         ],
     );
-    test_evt_injection(
-        &mut sm,
-        &mut receiver,
-        BasicEvt::A,
-        vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
-    );
-    test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
+ 
     test_evt_injection(
         &mut sm,
         &mut receiver,
         BasicEvt::E,
+        vec!["S12-HANDLES-E", "S121-EXIT", "S12-EXIT", "S11-ENTRY"],
+    );
+
+    test_evt_injection(
+        &mut sm,
+        &mut receiver,
+        BasicEvt::B,
         vec![
-            "S1-HANDLES-E",
-            "S122-EXIT",
-            "S12-EXIT",
-            "S1-EXIT",
-            "S1-ENTRY",
-            "S1-INIT",
-            "S11-ENTRY",
+            "S11-HANDLES-B",
+            "S11-EXIT",
+            "S12-ENTRY",
+            "S12-INIT",
+            "S121-ENTRY",
         ],
     );
+ 
+     test_evt_injection(
+         &mut sm,
+         &mut receiver,
+         BasicEvt::A,
+         vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
+     );
+     
+     test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
+ 
+     test_evt_injection(
+         &mut sm,
+         &mut receiver,
+         BasicEvt::F,
+         vec![
+             "S1-HANDLES-F",
+             "S122-EXIT",
+             "S12-EXIT",
+             "S1-EXIT",
+             "S1-ENTRY",
+             "S1-INIT",
+             "S11-ENTRY",
+         ],
+     );
 }
