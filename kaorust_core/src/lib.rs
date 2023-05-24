@@ -1,15 +1,21 @@
 //! # Kaorust State machine framework 
-//! Kaorust is an Hierarchical State Machine (HSM) framework developed in Rust, at destination of
-//! embedded systems and desktop computers. It can be used to create behavioural components of an
-//! application as fast and lightweight hierarchical state machines.
+//! Kaorust is a framework for developing Hierarchical State Machine(HSM) in Rust. Its lightweightness
+//! and perfomance make it ideal for firmware development on embedded systems, but it can also be used
+//! for any other type of application on any support.
 //!
 //!# What are Hierarchical state machines ?
+//! States machines are software enties processing events differently depending on the state
+//! they are. A state machine starts in an intial state. Different input events may lead to 
+//! different actions being performed by the state machine and can trigger transition to other
+//! states. In a conventional (flat) state machine, states are parallel and do not share behavior.
+//! 
+//! Hierarchical State Machines are state machines which can have nested states. By
+//! having the capability of inheriting the behavior of upper states, code duplication is avoided
+//! and the state machine become more comprehensible. HSMs are particularly useful for designing 
+//! state machines with complex behavior and a lot of states.
 //!
 //! ## Performance
-//! The framework is designed to be lightweight, holding just a few kilobytes in memory.
-//! It also has the advantages of being free of dynamic allocation and of virtual tables.
-//! That makes the framework very suitable for developping firmware on embedded systems,
-//! a target for which it was primarly designed.
+//! The framework is designed to lightweight in memory and is free of dynamic allocation.
 //!
 //! ## How to
 //! To build your own state machine, you first have to define the structure that will hold its
@@ -19,13 +25,14 @@
 //! After that, you will assemble a complete `StateMachine` by sending an instance of your structure which
 //! implements the mentioned traits as argument to the [`StateMachine::from()`] function.
 //! 
-//! After having been intialized by a call to the [`StateMachine::init()`] method, the state
-//! machine is ready to receive events through calls to the [`StateMachine::dispatch()`] method
+//! A single call to the [`StateMachine::init()`] method will initialize the state machine and lead
+//! it to its first state.It will after be ready to process events through the [`StateMachine::dispatch()`] method
+//!
 //!```rust
-//! use std::sync::mpsc::channel;
-//! use std::sync::mpsc::Receiver;
-//! use std::sync::mpsc::Sender;
-//! use std::sync::mpsc::TryRecvError;
+//!# use std::sync::mpsc::channel;
+//!# use std::sync::mpsc::Receiver;
+//!# use std::sync::mpsc::Sender;
+//!# use std::sync::mpsc::TryRecvError;
 //! use kaorust_core::*; 
 //! enum BasicEvt{
 //!     A,
@@ -119,41 +126,41 @@
 //!     }
 //! }
 //!
-//! fn collect_sm_output(receiver: &Receiver<String>) -> String {
-//!     receiver.try_recv().unwrap_or_else(|err| match err {
-//!         TryRecvError::Empty => panic!("Too many expectations for the SM output"),
-//!         TryRecvError::Disconnected => panic!("Disconnected"),
-//!     })
-//! }
-//! 
-//! fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
-//!     for (index, &expectation) in expectations.iter().enumerate() {
-//!         let sm_output = collect_sm_output(receiver);
-//!         if expectation != sm_output {
-//!             panic!(
-//!                 "Expectation index {},  expected : {},  got: {}",
-//!                 index, expectation, sm_output
-//!             )
-//!         }
-//!     }
-//! 
-//!     // Check that we have expected all the output of the SM
-//!     match receiver.try_recv().err() {
-//!         Some(TryRecvError::Empty) => { /* OK */ }
-//!         Some(TryRecvError::Disconnected) => {
-//!             panic!(" Sender is dead")
-//!         }
-//!         None => {
-//!             panic!("Too few expectations for the SM output")
-//!         }
-//!     }
-//! }
+//!# fn collect_sm_output(receiver: &Receiver<String>) -> String {
+//!#     receiver.try_recv().unwrap_or_else(|err| match err {
+//!#         TryRecvError::Empty => panic!("Too many expectations for the SM output"),
+//!#         TryRecvError::Disconnected => panic!("Disconnected"),
+//!#     })
+//!# }
+//!# 
+//!# fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
+//!#     for (index, &expectation) in expectations.iter().enumerate() {
+//!#         let sm_output = collect_sm_output(receiver);
+//!#         if expectation != sm_output {
+//!#             panic!(
+//!#                 "Expectation index {},  expected : {},  got: {}",
+//!#                 index, expectation, sm_output
+//!#             )
+//!#         }
+//!#     }
+//!# 
+//!#     // Check that we have expected all the output of the SM
+//!#     match receiver.try_recv().err() {
+//!#         Some(TryRecvError::Empty) => { /* OK */ }
+//!#         Some(TryRecvError::Disconnected) => {
+//!#             panic!(" Sender is dead")
+//!#         }
+//!#         None => {
+//!#             panic!("Too few expectations for the SM output")
+//!#         }
+//!#     }
+//!# }
 //!
-//!     let (sender, mut receiver) = channel();
+//!    let (sender, mut receiver) = channel();
 //! 
-//!     let basic_state_machine = BasicStateMachine::new(sender);
-//! 
-//!     let mut sm = StateMachine::from(basic_state_machine);
+//!    let basic_state_machine = BasicStateMachine::new(sender);
+//!
+//!    let mut sm = StateMachine::from(basic_state_machine);
 //!    
 //!    sm.init();
 //!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT"]);
