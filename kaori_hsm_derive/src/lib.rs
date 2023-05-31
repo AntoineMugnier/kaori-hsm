@@ -75,15 +75,15 @@ pub(crate) fn state_impl(args: TokenStream, item: TokenStream) -> TokenStream {
 
     if super_state_tag_ident.to_string() == "Top" {
         get_super_state_fn = syn::parse2(quote!(
-            fn get_parent_state() -> ParentState<Self> {
-                ParentState::TopReached
+            fn get_parent_state() -> kaori_hsm::ParentState<Self> {
+                kaori_hsm::ParentState::TopReached
             }
         ))
         .unwrap();
     } else {
         get_super_state_fn = syn::parse2(quote!(
-            fn get_parent_state() -> ParentState<Self> {
-                ParentState::Exists(State::<#super_state_tag_ident>::core_handle)
+            fn get_parent_state() -> kaori_hsm::ParentState<Self> {
+                kaori_hsm::ParentState::Exists(kaori_hsm::State::<#super_state_tag_ident>::core_handle)
             }
         ))
         .unwrap();
