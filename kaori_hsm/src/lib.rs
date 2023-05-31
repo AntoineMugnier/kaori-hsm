@@ -1,5 +1,5 @@
-//! # Kaorust State machine framework 
-//! Kaorust is a framework for developing Hierarchical State Machine(HSM) in Rust. Lightweight
+//! # kaori_hsm State machine framework 
+//! kaori_hsm is a framework for developing Hierarchical State Machine(HSM) in Rust. Lightweight
 //! performant, and free of any dynamic memory allocation, it is ideal for firmware development,
 //! but it can also be used for any other kind of application.
 //!
@@ -30,7 +30,7 @@
 //!# use std::sync::mpsc::Receiver;
 //!# use std::sync::mpsc::Sender;
 //!# use std::sync::mpsc::TryRecvError;
-//! use kaorust_core::*; 
+//! use kaori_hsm::*; 
 //! enum BasicEvt{
 //!     A,
 //!     B,
@@ -187,14 +187,14 @@ mod state_machine;
 pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;
 pub use state_machine::StateMachine;
-extern crate kaorust_derive;
-pub use kaorust_derive::state;
+extern crate kaori_hsm_derive;
+pub use kaori_hsm_derive::state;
 
 /// Sugar for constructing a `InitResult::TargetState` enum variant containing the target of the
 /// initial transition. Can be either used in [`ProtoStateMachine::init`] or [`State<Tag>::init`]
 /// # Example
 /// ```
-///# use kaorust_core::*; 
+///# use kaori_hsm::*; 
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -237,7 +237,7 @@ pub use kaorust_derive::state;
 #[macro_export]
 macro_rules! init_transition {
     ($target_state_tag:ident) => {
-        kaorust_core::InitResult::TargetState(kaorust_core::State::<$target_state_tag>::core_handle) 
+        kaori_hsm::InitResult::TargetState(kaori_hsm::State::<$target_state_tag>::core_handle) 
     }
 }
 
@@ -245,7 +245,7 @@ macro_rules! init_transition {
 /// transition
 /// # Example
 /// ```
-///# use kaorust_core::*; 
+///# use kaori_hsm::*; 
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -287,12 +287,12 @@ macro_rules! init_transition {
 #[macro_export]
 macro_rules! transition {
     ($target_state_tag:ident) => {
-        kaorust_core::HandleResult::Transition(kaorust_core::State::<$target_state_tag>::core_handle) 
+        kaori_hsm::HandleResult::Transition(kaori_hsm::State::<$target_state_tag>::core_handle) 
     }
 }
 /// Sugar for constructing a `HandleResult::Ignored` enum variant meaning no event has been handled
 /// ```
-///# use kaorust_core::*; 
+///# use kaori_hsm::*; 
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -320,12 +320,12 @@ macro_rules! transition {
 ///```
 #[macro_export]
 macro_rules! ignored {
-    () => {kaorust_core::HandleResult::Ignored}
+    () => {kaori_hsm::HandleResult::Ignored}
 }
 /// Sugar for constructing a `HandleResult::Handle` enum variant meaning the event has been caught
 /// without transition occuring.
 /// ```
-///# use kaorust_core::*; 
+///# use kaori_hsm::*; 
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -356,5 +356,5 @@ macro_rules! ignored {
 ///```
 #[macro_export]
 macro_rules! handled {
-    () => {kaorust_core::HandleResult::Handled}
+    () => {kaori_hsm::HandleResult::Handled}
 }

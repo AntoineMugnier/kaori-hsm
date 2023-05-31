@@ -23,7 +23,7 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
         panic!("dispatch() function called on state_machine before init")
     }
 
-    /// Build the Kaorust state machine from you structure which implements the
+    /// Build the kaori_hsm state machine from you structure which implements the
     /// `ProtoStateMachine` trait and as many variants of the [`State<tag>`] trait as
     /// you have states.
     pub fn from(user_state_machine: UserStateMachine) -> StateMachine<UserStateMachine> {

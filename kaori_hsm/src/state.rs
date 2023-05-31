@@ -44,7 +44,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 /// procedural macro is used, the tag is automatically defined by parsing the state implementation.
 /// # Example
 /// ```
-///# use kaorust_core::*;
+///# use kaori_hsm::*;
 ///#
 ///# enum BasicEvt{
 ///# A,

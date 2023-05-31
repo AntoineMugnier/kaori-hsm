@@ -4,7 +4,7 @@ pub use crate::StateMachine;
 /// Define the initial pseudostate and the type of event variant the state machine can receive
 /// # Example
 ///```rust
-///# use kaorust_core::*; 
+///# use kaori_hsm::*; 
 /// enum BasicEvt{
 /// A{counter: u8},
 /// B,

@@ -1,4 +1,4 @@
-use kaorust_core::*;
+use kaori_hsm::*;
 // Evt definition
 
 use rand::Rng;

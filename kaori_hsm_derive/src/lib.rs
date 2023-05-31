@@ -106,11 +106,11 @@ mod test {
     #[test]
     fn test_state_impl() {
         let attr = "super_state = Top";
-        let item = "impl kaorust_core::State<StateName> for UserStateMachine{ }";
+        let item = "impl kaori_hsm::State<StateName> for UserStateMachine{ }";
 
         let attr_tokens = TokenStream::from_str(attr).unwrap();
         let item_tokens = TokenStream::from_str(item).unwrap();
-        let expected_str = "struct StateName { } impl kaorust_core :: State < StateName > for UserStateMachine { fn get_parent_state () -> ParentState < Self > { ParentState :: TopReached } }";
+        let expected_str = "struct StateName { } impl kaori_hsm :: State < StateName > for UserStateMachine { fn get_parent_state () -> ParentState < Self > { ParentState :: TopReached } }";
         let res = crate::state_impl(attr_tokens, item_tokens);
         assert_eq!(expected_str, res.to_string());
     }
