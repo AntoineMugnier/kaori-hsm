@@ -83,7 +83,7 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
         if let CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result {
             parent_state_fn
         } else {
-            panic!() //error should not be possible
+            panic!("Variant returned by state fn is not ParentState")
         }
     }
 
@@ -95,7 +95,8 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
         let init_result = state_fn(user_state_machine, &init_evt);
         match init_result {
             CoreHandleResult::InitResult(init_result) => return init_result,
-            _ => panic!(), //error, should not be possible
+            _ => panic!("Variant returned by state fn is not InitResult")
+
         }
     }
 
@@ -135,18 +136,18 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
     fn exit_substates(
         user_state_machine: &mut UserStateMachine,
         curr_state_fn: StateFn<UserStateMachine>,
-        original_state_fn: StateFn<UserStateMachine>,
+        target_state: StateFn<UserStateMachine>,
     ) {
         let mut next_state_fn = curr_state_fn;
 
-        while next_state_fn as *const fn() != original_state_fn as *const fn() {
+        while next_state_fn as *const fn() != target_state as *const fn() {
             if let ParentState::Exists(parent_state_fn) =
                 Self::dispatch_get_super_state(user_state_machine, next_state_fn)
             {
                 Self::dispatch_exit_evt(user_state_machine, next_state_fn);
                 next_state_fn = parent_state_fn;
             } else {
-                panic!()
+                panic!("Target state not found when ascending state hierarchy")
             }
         }
     }
