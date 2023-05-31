@@ -1,7 +1,7 @@
 //! # Kaorust State machine framework 
-//! Kaorust is a framework for developing Hierarchical State Machine(HSM) in Rust. Its lightweightness
-//! and perfomance make it ideal for firmware development on embedded systems, but it can also be used
-//! for any other type of application on any support.
+//! Kaorust is a framework for developing Hierarchical State Machine(HSM) in Rust. Lightweight
+//! performant, and free of any dynamic memory allocation, it is ideal for firmware development,
+//! but it can also be used for any other kind of application.
 //!
 //!# What are Hierarchical state machines ?
 //! States machines are software enties processing events differently depending on the state
@@ -13,9 +13,6 @@
 //! having the capability of inheriting the behavior of upper states, code duplication is avoided
 //! and the state machine become more comprehensible. HSMs are particularly useful for designing 
 //! state machines with complex behavior and a lot of states.
-//!
-//! ## Performance
-//! The framework is designed to lightweight in memory and is free of dynamic allocation.
 //!
 //! ## How to
 //! To build your own state machine, you first have to define the structure that will hold its
