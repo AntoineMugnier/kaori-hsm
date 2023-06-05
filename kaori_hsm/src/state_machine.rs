@@ -1,6 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
 use crate::state::{CoreEvt, CoreHandleResult, InitResult, ParentState, State, StateFn};
-
 /// Type representing a completely functional state machine.
 /// Built using [`StateMachine::from()`] from an instance of a  user-defined structure
 /// on which has been implemented the `ProtoStateMachine` and `State` traits.

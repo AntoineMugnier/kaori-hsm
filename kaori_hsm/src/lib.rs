@@ -179,7 +179,7 @@
 //!
 //!```
 
-
+#![no_std]
 mod proto_state_machine;
 mod state;
 mod state_machine;
