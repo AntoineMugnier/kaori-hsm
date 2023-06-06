@@ -1,6 +1,6 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, visit_mut::VisitMut, Ident, ItemImpl, Token};
+use syn::{parse::Parse, Ident, ItemImpl, Token};
 
 #[proc_macro_attribute]
 pub fn state(
