@@ -111,10 +111,6 @@ impl State<S12> for BasicStateMachine {
 
     fn handle(&mut self, evt: &BasicEvt) -> HandleResult<Self> {
         match evt {
-            BasicEvt::B => {
-                self.sender.send(String::from("S12-HANDLES-B")).unwrap();
-                handled!()
-            }
             BasicEvt::D => {
                 self.sender.send(String::from("S12-HANDLES-D")).unwrap();
                 transition!(S121)
