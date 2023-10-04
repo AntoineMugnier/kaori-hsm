@@ -346,7 +346,7 @@ macro_rules! ignored {
 /// 
 ///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///         match evt{
-///             A => {
+///             BasicEvt::A => {
 ///                 println!("S0-HANDLES-A");
 ///                 handled!()
 ///             }
