@@ -22,168 +22,145 @@ trait BusinessLogic{
         panic!("dispatch() function called on state_machine before init")
     }
 
-//
-//    fn dispatch_get_super_state(
-//        user_state_machine: denatured::OpaquePtr,
-//        state_fn: denatured::StateFn,
-//    ) -> denatured::ParentState {
-//        let get_parent_state_evt =
-//            CoreEvt::GetParentStateEvt;
-//
-//        let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
-//
-//        if let CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result {
-//            parent_state_fn
-//        } else {
-//            panic!("Variant returned by state fn is not ParentState")
-//        }
-//    }
-//
-//
-//    fn dispatch_exit_evt(
-//        user_state_machine: denatured::OpaquePtr,
-//        state_fn: denatured::StateFn,
-//    ) {
-//        let exit_evt = CoreEvt::ExitEvt;
-//        state_fn(user_state_machine, &exit_evt);
-//    }
-//
-///
-//    
-//
-//    fn exit_substates(
-//        user_state_machine: denatured::OpaquePtr,
-//        curr_state_fn: denatured::StateFn,
-//        target_state: denatured::StateFn,
-//    )-> denatured::StateFn {
-//        let mut next_state_fn = curr_state_fn;
-//
-//        while next_state_fn != target_state {
-//            if let ParentState::Exists(parent_state_fn) =
-//                Self::dispatch_get_super_state(user_state_machine, next_state_fn)
-//            {
-//                Self::dispatch_exit_evt(user_state_machine, next_state_fn);
-//                next_state_fn = parent_state_fn;
-//            } else {
-//                panic!("Target state not found when ascending state hierarchy")
-//            }
-//        }
-//        next_state_fn
-//    }
-//
-//    fn find_dissociate_states<'a>(
-//        &mut self,
-//        original_state_link: &'a Link<'a>,
-//        target_state_link: &'a Link<'a>,
-//    ) -> (
-//        Option<&'a Link<'a>>,
-//    ) {
-//        let mut original_state_link = original_state_link;
-//        let mut target_state_link = target_state_link;
-//
-//        loop {
-//            if original_state_link.state_fn as *const fn()
-//                != target_state_link.state_fn as *const fn()
-//            {
-//                return (Some(original_state_link), Some(target_state_link));
-//            }
-//
-//            if let Some(next_original_state_link) = original_state_link.next_link {
-//                if let Some(next_target_state_link) = target_state_link.next_link {
-//                    original_state_link = next_original_state_link;
-//                    target_state_link = next_target_state_link;
-//                } else {
-//                    return (original_state_link.next_link, None);
-//                }
-//            } else {
-//                if target_state_link.next_link.is_some() {
-//                    return (None, target_state_link.next_link);
-//                } else {
-//                    return (None, None);
-//                }
-//            }
-//        }
-//    }
-//
-//    fn enter_substates(
-//        user_state_machine: denatured::OpaquePtr,
-//        target_state_link: &Link,
-//    )  {
-//        let mut target_state_link = target_state_link;
-//
-//        while let Some(next_state) = target_state_link.next_link {
-//            Self::dispatch_entry_evt(user_state_machine, next_state.state_fn);
-//            target_state_link = next_state;
-//        }
-//    }
-//
-//    fn reach_target_state(
-//        user_state_machine: denatured::OpaquePtr,
-//        original_state_link: Link,
-//        target_state_link: Link,
-//    ) {
-//        if let ParentState::Exists(original_state_parent_fn) = Self::dispatch_get_super_state(
-//            user_state_machine,
-//            original_state_link.state_fn,
-//        ) {
-//            let new_original_state_link = Link {
-//                state_fn: original_state_parent_fn,
-//                next_link: Some(&original_state_link),
-//            };
-//
-//            if let ParentState::Exists(target_state_parent_fn) = Self::dispatch_get_super_state(
-//                user_state_machine,
-//                target_state_link.state_fn,
-//            ) {
-//                let new_target_state_link = Link {
-//                    state_fn: target_state_parent_fn,
-//                    next_link: Some(&target_state_link),
-//                };
-//                Self::reach_target_state(new_original_state_link, new_target_state_link)
-//            } else {
-//                Self::reach_target_state(new_original_state_link, target_state_link)
-//            }
-//        } else {
-//            if let ParentState::Exists(parent_state_fn) = Self::dispatch_get_super_state(
-//                user_state_machine,
-//                target_state_link.state_fn,
-//            ) {
-//                let new_target_state_link = Link {
-//                    state_fn: parent_state_fn,
-//                    next_link: Some(&target_state_link),
-//                };
-//                Self::reach_target_state(original_state_link, new_target_state_link)
-//            } else {
-//                let (dissociated_original_state, dissociated_target_state) =
-//                    Self::find_dissociate_states(&original_state_link, &target_state_link);
-//
-//                if let Some(dissociated_original_state_link) = dissociated_original_state {
-//                    Self::exit_substates(
-//                        user_state_machine,
-//                        curr_state,
-//                        dissociated_original_state_link.state_fn,
-//                    );
-//                    Self::dispatch_exit_evt(
-//                        user_state_machine,
-//                        dissociated_original_state_link.state_fn,
-//                    );
-//                }
-//
-//                if let Some(dissociated_target_state_link) = dissociated_target_state {
-//                    Self::dispatch_entry_evt(
-//                        user_state_machine,
-//                        dissociated_target_state_link.state_fn,
-//                    );
-//                    Self::enter_substates(
-//                        user_state_machine,
-//                        dissociated_target_state_link,
-//                    );
-//                }
-//            }
-//        }
-//    }
-//
-    
+
+    fn find_dissociate_states<'a>(
+        original_state_link: &'a Link<'a>,
+        target_state_link: &'a Link<'a>,
+    ) -> (
+        Option<&'a Link<'a>>,
+        Option<&'a Link<'a>>
+    ) {
+        let mut original_state_link = original_state_link;
+        let mut target_state_link = target_state_link;
+
+        loop {
+            if original_state_link.state_fn as *const fn()
+                != target_state_link.state_fn as *const fn()
+            {
+                return (Some(original_state_link), Some(target_state_link));
+            }
+
+            if let Some(next_original_state_link) = original_state_link.next_link {
+                if let Some(next_target_state_link) = target_state_link.next_link {
+                    original_state_link = next_original_state_link;
+                    target_state_link = next_target_state_link;
+                } else {
+                    return (original_state_link.next_link, None);
+                }
+            } else {
+                if target_state_link.next_link.is_some() {
+                    return (None, target_state_link.next_link);
+                } else {
+                    return (None, None);
+                }
+            }
+        }
+    }
+
+    fn enter_substates(
+        user_state_machine: denatured::OpaquePtr,
+        target_state_link: &Link,
+    )  {
+        let mut target_state_link = target_state_link;
+
+        while let Some(next_state) = target_state_link.next_link {
+            Self::dispatch_entry_evt(user_state_machine, next_state.state_fn);
+            target_state_link = next_state;
+        }
+    }
+
+    fn reach_target_state(
+        user_state_machine: denatured::OpaquePtr,
+        current_state_fn: &mut denatured::StateFn,
+        original_state_link: Link,
+        target_state_link: Link,
+    ) {
+        if let denatured::ParentState::Exists(original_state_parent_fn) = Self::dispatch_get_super_state(
+            user_state_machine,
+            original_state_link.state_fn,
+        ) {
+            let new_original_state_link = Link {
+                state_fn: original_state_parent_fn,
+                next_link: Some(&original_state_link),
+            };
+
+            if let denatured::ParentState::Exists(target_state_parent_fn) = Self::dispatch_get_super_state(
+                user_state_machine,
+                target_state_link.state_fn,
+            ) {
+                let new_target_state_link = Link {
+                    state_fn: target_state_parent_fn,
+                    next_link: Some(&target_state_link),
+                };
+                Self::reach_target_state( user_state_machine, current_state_fn, new_original_state_link, new_target_state_link)
+            } else {
+                Self::reach_target_state( user_state_machine, current_state_fn, new_original_state_link, target_state_link)
+            }
+        } else {
+            if let denatured::ParentState::Exists(parent_state_fn) = Self::dispatch_get_super_state(
+                user_state_machine,
+                target_state_link.state_fn,
+            ) {
+                let new_target_state_link = Link {
+                    state_fn: parent_state_fn,
+                    next_link: Some(&target_state_link),
+                };
+                Self::reach_target_state(user_state_machine,current_state_fn, original_state_link, new_target_state_link)
+            } else {
+                let (dissociated_original_state, dissociated_target_state) =
+                    Self::find_dissociate_states(&original_state_link, &target_state_link);
+
+                if let Some(dissociated_original_state_link) = dissociated_original_state {
+                    Self::exit_substates(
+                        user_state_machine,
+                        current_state_fn,
+                        dissociated_original_state_link.state_fn,
+                    );
+                    Self::dispatch_exit_evt(
+                        user_state_machine,
+                        dissociated_original_state_link.state_fn,
+                    );
+                }
+
+                if let Some(dissociated_target_state_link) = dissociated_target_state {
+                    Self::dispatch_entry_evt(
+                        user_state_machine,
+                        dissociated_target_state_link.state_fn,
+                    );
+                    Self::enter_substates(
+                        user_state_machine,
+                        dissociated_target_state_link,
+                    );
+                }
+            }
+        }
+    }
+
+    fn dispatch_get_super_state(
+        user_state_machine: denatured::OpaquePtr,
+        state_fn: denatured::StateFn,
+    ) -> denatured::ParentState {
+        let get_parent_state_evt =
+            denatured::CoreEvt::GetParentStateEvt;
+
+        let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
+
+        if let denatured::CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result {
+            parent_state_fn
+        } else {
+            panic!("Variant returned by state fn is not ParentState")
+        }
+    }
+
+
+    fn dispatch_exit_evt(
+        user_state_machine: denatured::OpaquePtr,
+        state_fn: denatured::StateFn,
+    ) {
+        let exit_evt = denatured::CoreEvt::ExitEvt;
+        state_fn(user_state_machine, &exit_evt);
+    }
+   
     fn dispatch_init_evt(
         user_state_machine: denatured::OpaquePtr,
         state_fn: denatured::StateFn,
@@ -214,6 +191,26 @@ trait BusinessLogic{
         *current_state_fn = current_target_state_fn;
     }
 
+    fn exit_substates(
+        user_state_machine: denatured::OpaquePtr,
+        curr_state_fn: &mut denatured::StateFn,
+        target_state_fn: denatured::StateFn,
+    )  {
+        let mut next_state_fn = *curr_state_fn;
+
+        while next_state_fn != target_state_fn {
+            if let denatured::ParentState::Exists(parent_state_fn) =
+                Self::dispatch_get_super_state(user_state_machine, next_state_fn)
+            {
+                Self::dispatch_exit_evt(user_state_machine, next_state_fn);
+                next_state_fn = parent_state_fn;
+            } else {
+                panic!("Target state not found when ascending state hierarchy")
+            }
+        }
+        *curr_state_fn = next_state_fn
+    }
+
     fn dispatch_entry_evt(
        user_state_machine: denatured::OpaquePtr,
        state_fn: denatured::StateFn
@@ -226,7 +223,7 @@ trait BusinessLogic{
     /// `ProtoStateMachine::init`. That call will lead to the first state of the machine to be
     /// set.   
     /// This method should only be called once
-    fn init(user_state_machine : denatured::OpaquePtr, current_state_fn: &mut denatured::StateFn, init_result : &mut denatured::InitResult) {
+    fn init(user_state_machine : denatured::OpaquePtr, current_state_fn: &mut denatured::StateFn, init_result : &denatured::InitResult) {
         match init_result {
             denatured::InitResult::TargetState(topmost_init_target_state_fn) => {
                 // Reach leaf state
@@ -245,18 +242,18 @@ trait BusinessLogic{
         handling_state_fn: denatured::StateFn,
         target_state_fn: denatured::StateFn,
     ) {
-       // Self::exit_substates(
-       //     &mut self.user_state_machine,
-       //     self.curr_state,
-       //     handling_state_fn,
-       // );
+        Self::exit_substates(
+            user_state_machine,
+            current_state_fn,
+            handling_state_fn,
+        );
         
         *current_state_fn = handling_state_fn;
 
         // Special handling in case of targetting the current state
-        if handling_state_fn as *const fn() == target_state_fn as *const fn() {
-            //Self::dispatch_exit_evt(&mut self.user_state_machine, handling_state_fn);
-            //Self::dispatch_entry_evt(&mut self.user_state_machine, handling_state_fn);
+        if handling_state_fn  == target_state_fn {
+            Self::dispatch_exit_evt(user_state_machine, handling_state_fn);
+            Self::dispatch_entry_evt(user_state_machine, handling_state_fn);
         }
 
         let curr_state_link = Link {
@@ -268,7 +265,7 @@ trait BusinessLogic{
             next_link: None,
         };
 
-        //self.reach_target_state(curr_state_link, target_state_link);
+        Self::reach_target_state(user_state_machine, current_state_fn, curr_state_link, target_state_link);
 
         let curr_state_after_target_reached = target_state_fn;
         Self::reach_init_target(user_state_machine, current_state_fn, curr_state_after_target_reached);
@@ -355,7 +352,7 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
             <StateMachine<UserStateMachine> as BusinessLogic>::init(
                 core::mem::transmute(&mut self.user_state_machine), 
                 core::mem::transmute(&mut self.curr_state),
-                core::mem::transmute(init_result)) 
+                core::mem::transmute(&init_result)) 
         }
     }
 
