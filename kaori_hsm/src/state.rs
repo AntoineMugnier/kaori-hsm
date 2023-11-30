@@ -3,9 +3,9 @@ use crate::proto_state_machine::ProtoStateMachine;
 pub(crate) mod denatured{
 
     pub struct OpaqueType{}
-    type OpaquePtr = *mut OpaqueType;
-    type StateFn = fn(OpaquePtr, CoreEvt);
-    type UserEvt = OpaquePtr ;
+    pub type OpaquePtr = *mut OpaqueType;
+    pub type StateFn = fn(OpaquePtr, &CoreEvt) -> CoreHandleResult;
+    pub type UserEvt = OpaquePtr ;
 
 
     pub enum HandleResult{
