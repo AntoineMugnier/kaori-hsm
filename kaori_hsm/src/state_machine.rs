@@ -34,8 +34,8 @@ trait BusinessLogic{
         let mut target_state_link = target_state_link;
 
         loop {
-            if original_state_link.state_fn as *const fn()
-                != target_state_link.state_fn as *const fn()
+            if original_state_link.state_fn 
+                != target_state_link.state_fn 
             {
                 return (Some(original_state_link), Some(target_state_link));
             }
@@ -113,7 +113,7 @@ trait BusinessLogic{
                 if let Some(dissociated_original_state_link) = dissociated_original_state {
                     Self::exit_substates(
                         user_state_machine,
-                        current_state_fn,
+                        *current_state_fn,
                         dissociated_original_state_link.state_fn,
                     );
                     Self::dispatch_exit_evt(
@@ -193,10 +193,10 @@ trait BusinessLogic{
 
     fn exit_substates(
         user_state_machine: denatured::OpaquePtr,
-        curr_state_fn: &mut denatured::StateFn,
+        curr_state_fn: denatured::StateFn,
         target_state_fn: denatured::StateFn,
     )  {
-        let mut next_state_fn = *curr_state_fn;
+        let mut next_state_fn = curr_state_fn;
 
         while next_state_fn != target_state_fn {
             if let denatured::ParentState::Exists(parent_state_fn) =
@@ -208,7 +208,6 @@ trait BusinessLogic{
                 panic!("Target state not found when ascending state hierarchy")
             }
         }
-        *curr_state_fn = next_state_fn
     }
 
     fn dispatch_entry_evt(
@@ -244,7 +243,7 @@ trait BusinessLogic{
     ) {
         Self::exit_substates(
             user_state_machine,
-            current_state_fn,
+            *current_state_fn,
             handling_state_fn,
         );
         
@@ -298,7 +297,7 @@ trait BusinessLogic{
                 Self::handle_ignored_evt(user_state_machine, current_state_fn, parent_state_fn, evt)
             }
             denatured::CoreHandleResult::Transition(target_state_fn) => {
-                Self::handle_transition(user_state_machine, current_state_fn, *current_state_fn, target_state_fn)
+                Self::handle_transition(user_state_machine, current_state_fn, handling_state_fn, target_state_fn)
             }
             _ => {}
         }
