@@ -221,13 +221,14 @@ fn test_evt_injection(
     expect_output_series(receiver, expectations);
 }
 
-fn test_sm_init(
-    sm: &mut StateMachine<BasicStateMachine>,
+fn test_sm_init (
+    ism: InitStateMachine<BasicStateMachine>,
     receiver: &mut Receiver<String>,
     expectations: Vec<&str>,
-) {
-    sm.init();
+)-> StateMachine<BasicStateMachine> {
+    let sm = ism.init();
     expect_output_series(receiver, expectations);
+    sm
 }
 
 #[test]
@@ -236,10 +237,10 @@ fn hsm_test() {
 
     let basic_state_machine = BasicStateMachine::new(sender);
 
-    let mut sm = StateMachine::from(basic_state_machine);
+    let ism = InitStateMachine::from(basic_state_machine);
 
-    test_sm_init(
-        &mut sm,
+    let mut sm = test_sm_init(
+        ism,
         &mut receiver,
         vec!["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"],
     );

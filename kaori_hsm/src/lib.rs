@@ -184,10 +184,11 @@ mod proto_state_machine;
 mod state;
 mod state_machine;
 mod sm_business_logic;
-
+mod init_state_machine;
 pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;
 pub use state_machine::StateMachine;
+pub use init_state_machine::InitStateMachine;
 extern crate kaori_hsm_derive;
 pub use kaori_hsm_derive::state;
 
