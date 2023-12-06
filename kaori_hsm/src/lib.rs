@@ -183,6 +183,7 @@
 mod proto_state_machine;
 mod state;
 mod state_machine;
+mod sm_business_logic;
 
 pub use state::{InitResult, ParentState, State, HandleResult};
 pub use proto_state_machine::ProtoStateMachine;

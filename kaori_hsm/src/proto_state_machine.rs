@@ -1,6 +1,5 @@
 pub use crate::state::{HandleResult, InitResult, ParentState, CoreHandleResult, State};
 pub use crate::StateMachine;
-
 /// Define the initial pseudostate and the type of event variant the state machine can receive
 /// # Example
 ///```rust
@@ -37,7 +36,7 @@ pub use crate::StateMachine;
 ///   }
 /// }
 ///```
-pub trait ProtoStateMachine
+pub trait ProtoStateMachine 
 {
     /// Type that must be implemented by the user in order to define the events that can be handled
     /// by the state machine. Should be defined as an enum with each variants defining a unique
