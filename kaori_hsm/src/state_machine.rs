@@ -1,5 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::state::{denatured, CoreEvt, CoreHandleResult, InitResult, ParentState, StateFn};
+use crate::state::{denatured, CoreEvt, StateFn};
 
 //For doc
 #[allow(unused_imports)]
@@ -16,7 +16,7 @@ pub struct StateMachine<UserStateMachine: ProtoStateMachine> {
 trait BusinessLogic{
 
     fn default_state(
-        _user_sm: denatured::OpaquePtr,
+        _user_sm: *mut denatured::OpaqueType,
         _evt: &denatured::CoreEvt,
     ) -> denatured::CoreHandleResult {
         panic!("dispatch() function called on state_machine before init")
@@ -58,7 +58,7 @@ trait BusinessLogic{
     }
 
     fn enter_substates(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         target_state_link: &Link,
     )  {
         let mut target_state_link = target_state_link;
@@ -70,7 +70,7 @@ trait BusinessLogic{
     }
 
     fn reach_target_state(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         original_state_link: Link,
         target_state_link: Link,
@@ -137,7 +137,7 @@ trait BusinessLogic{
     }
 
     fn dispatch_get_super_state(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         state_fn: denatured::StateFn,
     ) -> denatured::ParentState {
         let get_parent_state_evt =
@@ -154,7 +154,7 @@ trait BusinessLogic{
 
 
     fn dispatch_exit_evt(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         state_fn: denatured::StateFn,
     ) {
         let exit_evt = denatured::CoreEvt::ExitEvt;
@@ -162,7 +162,7 @@ trait BusinessLogic{
     }
    
     fn dispatch_init_evt(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         state_fn: denatured::StateFn,
     ) -> denatured::InitResult {
         let init_evt = denatured::CoreEvt::InitEvt;
@@ -175,7 +175,7 @@ trait BusinessLogic{
     }
 
     fn reach_init_target(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         target_state_fn: denatured::StateFn
     )  {
@@ -192,7 +192,7 @@ trait BusinessLogic{
     }
 
     fn exit_substates(
-        user_state_machine: denatured::OpaquePtr,
+        user_state_machine: *mut denatured::OpaqueType,
         curr_state_fn: denatured::StateFn,
         target_state_fn: denatured::StateFn,
     )  {
@@ -211,7 +211,7 @@ trait BusinessLogic{
     }
 
     fn dispatch_entry_evt(
-       user_state_machine: denatured::OpaquePtr,
+       user_state_machine: *mut denatured::OpaqueType,
        state_fn: denatured::StateFn
    ) {
        let entry_evt = denatured::CoreEvt::EntryEvt;
@@ -222,7 +222,7 @@ trait BusinessLogic{
     /// `ProtoStateMachine::init`. That call will lead to the first state of the machine to be
     /// set.   
     /// This method should only be called once
-    fn init(user_state_machine : denatured::OpaquePtr, current_state_fn: &mut denatured::StateFn, init_result : &denatured::InitResult) {
+    fn init(user_state_machine : *mut denatured::OpaqueType, current_state_fn: &mut denatured::StateFn, init_result : &denatured::InitResult) {
         match init_result {
             denatured::InitResult::TargetState(topmost_init_target_state_fn) => {
                 // Reach leaf state
@@ -236,7 +236,7 @@ trait BusinessLogic{
     }
 
     fn handle_transition(
-        user_state_machine : denatured::OpaquePtr,
+        user_state_machine : *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         handling_state_fn: denatured::StateFn,
         target_state_fn: denatured::StateFn,
@@ -271,7 +271,7 @@ trait BusinessLogic{
     }
 
     fn handle_ignored_evt(
-        user_state_machine : denatured::OpaquePtr,
+        user_state_machine : *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         parent_state_variant: denatured::ParentState,
         evt: &denatured::CoreEvt,
@@ -283,7 +283,7 @@ trait BusinessLogic{
     }
 
     fn dispatch_core_event(
-        user_state_machine : denatured::OpaquePtr,
+        user_state_machine : *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         handling_state_fn: denatured::StateFn,
         evt: &denatured::CoreEvt,
@@ -304,7 +304,7 @@ trait BusinessLogic{
     }
     
     fn dispatch_event(
-        user_state_machine : denatured::OpaquePtr,
+        user_state_machine : *mut denatured::OpaqueType,
         current_state_fn: &mut denatured::StateFn,
         evt: &denatured::CoreEvt
     ){
