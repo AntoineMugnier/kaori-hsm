@@ -323,20 +323,19 @@ struct Link<'a> {
 
 /// Struct encapsulating the business logic of hierarchical state machine
 impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
-    fn default_state(
-        _user_sm: &mut UserStateMachine,
-        _evt: &CoreEvt<<UserStateMachine as ProtoStateMachine>::Evt>,
-    ) -> CoreHandleResult<UserStateMachine> {
-        panic!("dispatch() function called on state_machine before init")
-    }
 
     /// Build the kaori_hsm state machine from you structure which implements the
     /// `ProtoStateMachine` trait and as many variants of the [`State<tag>`] trait as
     /// you have states.
     pub fn from(user_state_machine: UserStateMachine) -> StateMachine<UserStateMachine> {
+        
+        unsafe{
+            let default_state =  <StateMachine<UserStateMachine> as BusinessLogic>::default_state;
+            let default_state = default_state as *mut StateFn<UserStateMachine>;
         StateMachine {
             user_state_machine,
-            curr_state: Self::default_state,
+            curr_state: core::mem::transmute(default_state),
+        }
         }
     }
 
