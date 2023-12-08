@@ -4,11 +4,10 @@ use crate::state::{CoreEvt, StateFn};
 
 //For doc
 #[allow(unused_imports)]
-use crate::state::State;
+use crate::{InitStateMachine, State};
 
-/// Type representing a completely functional state machine.
-/// Built using [`StateMachine::from()`] from an instance of a  user-defined structure
-/// on which has been implemented the `ProtoStateMachine` and `State` traits.
+/// Type representing a fully functional state machine.
+/// Built from the call to [`InitStateMachine::init()`] 
 pub struct StateMachine<UserStateMachine: ProtoStateMachine> {
     pub(crate) user_state_machine: UserStateMachine,
     pub(crate) curr_state: StateFn<UserStateMachine>,

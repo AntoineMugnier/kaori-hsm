@@ -19,11 +19,13 @@
 //! data and then you will need to implement the following traits of the framework on it: the [`ProtoStateMachine`]
 //! trait and as many variant of the [`State<Tag>`] trait as you want to define states.
 //!
-//! After that, you will assemble a complete `StateMachine` by sending an instance of your structure which
-//! implements the mentioned traits as argument to the [`StateMachine::from()`] function.
-//! 
-//! A single call to the [`StateMachine::init()`] method will initialize the state machine and lead
-//! it to its first state.It will after be ready to process events through the [`StateMachine::dispatch()`] method
+//! The following sequence has to be followed in order to build an operational state machine.
+//! The builder pattern in used in order to enforce statically the steps order:
+//! - Create an instance of the structure you previously defined.
+//! - Call the [`InitStateMachine::from()`] function with the instance as argument. A ['InitStateMachine'] instance will be returned. 
+//! - Call the [`InitStateMachine::init()`] method on this instance. It will initialize the state machine and lead
+//! it to transition to its first state. A [`StateMachine`] instance will be returned from this method, constituing the operational state machine. 
+//! This structure only exposes the [`StateMachine::dispatch()`] method used for injecting events into it.
 //!
 //!```rust
 //!# use std::sync::mpsc::channel;
@@ -49,9 +51,7 @@
 //!     fn post_string(&self, s : &str){
 //!         self.sender.send(String::from(s)).unwrap();
 //!     }
-//! }
-//!
-//! impl ProtoStateMachine for BasicStateMachine{
+//! } impl ProtoStateMachine for BasicStateMachine{
 //!   type Evt = BasicEvt;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
@@ -157,9 +157,9 @@
 //! 
 //!    let basic_state_machine = BasicStateMachine::new(sender);
 //!
-//!    let mut sm = StateMachine::from(basic_state_machine);
-//!    
-//!    sm.init();
+//!    let ism = InitStateMachine::from(basic_state_machine);
+//!
+//!    let mut sm = ism.init();
 //!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT"]);
 //!    
 //!    sm.dispatch(&BasicEvt::A);

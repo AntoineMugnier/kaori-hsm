@@ -8,12 +8,14 @@ pub(crate) mod denatured{
     pub type UserEvt = OpaquePtr ;
 
 
+    #[allow(unused)]
     pub enum HandleResult{
         Ignored,
         Handled,
         Transition(StateFn),
     }
 
+    #[allow(unused)]
     pub enum CoreHandleResult {
     Ignored(ParentState),
     Handled,
@@ -22,16 +24,19 @@ pub(crate) mod denatured{
     InitResult(InitResult),
     }
 
+    #[allow(unused)]
     pub enum ParentState {
         TopReached,
         Exists(StateFn),
     }
     
+    #[allow(unused)]
     pub enum InitResult {
         NotImplemented,
         TargetState(StateFn),
     }
     
+    #[allow(unused)]
     pub enum CoreEvt<'a>{
         InitEvt,
         EntryEvt,

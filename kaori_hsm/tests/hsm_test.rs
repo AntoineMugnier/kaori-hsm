@@ -236,7 +236,6 @@ fn hsm_test() {
     let (sender, mut receiver) = channel();
 
     let basic_state_machine = BasicStateMachine::new(sender);
-
     let ism = InitStateMachine::from(basic_state_machine);
 
     let mut sm = test_sm_init(

@@ -1,5 +1,4 @@
-use crate::proto_state_machine::ProtoStateMachine;
-use crate::state::{denatured, CoreEvt, StateFn};
+use crate::state::denatured;
 
 
     pub(crate) fn default_state(

@@ -1,5 +1,11 @@
 pub use crate::state::{HandleResult, InitResult, ParentState, CoreHandleResult, State};
 pub use crate::StateMachine;
+
+//For doc
+#[allow(unused_imports)]
+use crate::InitStateMachine;
+
+
 /// Define the initial pseudostate and the type of event variant the state machine can receive
 /// # Example
 ///```rust
@@ -44,7 +50,7 @@ pub trait ProtoStateMachine
   type Evt;
 
     /// Initial pseudostate whose role is to initialize the state machine and lead to its
-    /// default state. This method call is triggered by the call to [`StateMachine::init`]
+    /// default state. This method call is triggered by the call to [`InitStateMachine::init()`]
     /// Usually, in the implementation of this method, the user sets up internal objects used by the state machine.
     fn init(&mut self)-> InitResult<Self>;
 }

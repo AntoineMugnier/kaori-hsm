@@ -1,13 +1,13 @@
 use crate::proto_state_machine::ProtoStateMachine;
 use crate::{sm_business_logic, StateMachine};
-use crate::state::{CoreEvt, StateFn};
+use crate::state::StateFn;
 
 //For doc
 #[allow(unused_imports)]
 use crate::state::State;
 
 /// Type representing a completely functional state machine.
-/// Built using [`StateMachine::from()`] from an instance of a  user-defined structure
+/// Built using [`InitStateMachine::from()`] from an instance of a  user-defined structure
 /// on which has been implemented the `ProtoStateMachine` and `State` traits.
 pub struct InitStateMachine<UserStateMachine: ProtoStateMachine> {
     user_state_machine: UserStateMachine,
