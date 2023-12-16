@@ -29,9 +29,9 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
         }
     }
 
-    /// Consume the object, triggerring the execution of the initial pseudostate of the state machine by calling
-    /// `ProtoStateMachine::init`. That call willl lead to the first state of the machine to be
-    /// set. A fully operational state machine is returned.   
+    /// Consume the structure instance, triggerring the call to `ProtoStateMachine::init() and
+    /// performing transition to the first state. A fully operational state machine
+    /// is returned.   
     pub fn init(mut self) -> StateMachine<UserStateMachine> {
         // Call user top initial pseudostate implementation
         let init_result = self.user_state_machine.init();
