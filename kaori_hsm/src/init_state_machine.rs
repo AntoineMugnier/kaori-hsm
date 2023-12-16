@@ -6,7 +6,7 @@ use crate::{sm_business_logic, StateMachine};
 #[allow(unused_imports)]
 use crate::state::State;
 
-/// Type representing a completely functional state machine.
+/// Represents a precursor to a state machine, waiting to be initialized. 
 /// Built using [`InitStateMachine::from()`] from an instance of a  user-defined structure
 /// on which has been implemented the `ProtoStateMachine` and `State` traits.
 pub struct InitStateMachine<UserStateMachine: ProtoStateMachine> {
@@ -15,7 +15,7 @@ pub struct InitStateMachine<UserStateMachine: ProtoStateMachine> {
 }
 
 impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
-    /// Build the kaori_hsm state machine from you structure which implements the
+    /// Build the precursor state machine from you structure which implements the
     /// `ProtoStateMachine` trait and as many variants of the [`State<tag>`] trait as
     /// you have states.
     pub fn from(user_state_machine: UserStateMachine) -> InitStateMachine<UserStateMachine> {
@@ -29,7 +29,7 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
         }
     }
 
-    /// Consume the structure instance, triggerring the call to `ProtoStateMachine::init() and
+    /// Consume the structure instance, triggerring the call to [`ProtoStateMachine::init()`] and
     /// performing transition to the first state. A fully operational state machine
     /// is returned.   
     pub fn init(mut self) -> StateMachine<UserStateMachine> {

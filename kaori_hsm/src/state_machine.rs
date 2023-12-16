@@ -6,18 +6,16 @@ use crate::state::{CoreEvt, StateFn};
 #[allow(unused_imports)]
 use crate::{InitStateMachine, State};
 
-/// Type representing a fully functional state machine.
-/// Built from the call to [`InitStateMachine::init()`]
+/// Represents a fully functional state machine, which already transitioned to its
+/// first state. May be only created from a call to [`InitStateMachine::init()`].
 pub struct StateMachine<UserStateMachine: ProtoStateMachine> {
     pub(crate) user_state_machine: UserStateMachine,
     pub(crate) curr_state: StateFn<UserStateMachine>,
 }
 
-/// Struct encapsulating the business logic of hierarchical state machine
 impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
-    /// Dispatch an event of the type you have attributed to `ProtoStateMachine::Evt`.
-    /// The `dispatch()` method should only be called after `init()`, otherwise the framework will
-    /// panic
+    /// Dispatch an event to the state machine. The event is of the type you have set
+    /// in [`ProtoStateMachine::Evt`].
     pub fn dispatch(&mut self, user_evt: &<UserStateMachine as ProtoStateMachine>::Evt) {
         // Dispatch user evt to current state
         let evt = CoreEvt::UserEvt { user_evt };
