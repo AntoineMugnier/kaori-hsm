@@ -13,7 +13,7 @@ enum BasicEvt {
     C,
     D,
     E,
-    F
+    F,
 }
 
 struct BasicStateMachine {
@@ -115,7 +115,7 @@ impl State<S12> for BasicStateMachine {
                 self.sender.send(String::from("S12-HANDLES-D")).unwrap();
                 transition!(S121)
             }
-            BasicEvt::E =>{
+            BasicEvt::E => {
                 self.sender.send(String::from("S12-HANDLES-E")).unwrap();
                 transition!(S11)
             }
@@ -222,12 +222,13 @@ fn test_evt_injection(
 }
 
 fn test_sm_init(
-    sm: &mut StateMachine<BasicStateMachine>,
+    ism: InitStateMachine<BasicStateMachine>,
     receiver: &mut Receiver<String>,
     expectations: Vec<&str>,
-) {
-    sm.init();
+) -> StateMachine<BasicStateMachine> {
+    let sm = ism.init();
     expect_output_series(receiver, expectations);
+    sm
 }
 
 #[test]
@@ -235,11 +236,10 @@ fn hsm_test() {
     let (sender, mut receiver) = channel();
 
     let basic_state_machine = BasicStateMachine::new(sender);
+    let ism = InitStateMachine::from(basic_state_machine);
 
-    let mut sm = StateMachine::from(basic_state_machine);
-
-    test_sm_init(
-        &mut sm,
+    let mut sm = test_sm_init(
+        ism,
         &mut receiver,
         vec!["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"],
     );
@@ -304,7 +304,7 @@ fn hsm_test() {
             "S121-ENTRY",
         ],
     );
- 
+
     test_evt_injection(
         &mut sm,
         &mut receiver,
@@ -324,28 +324,28 @@ fn hsm_test() {
             "S121-ENTRY",
         ],
     );
- 
-     test_evt_injection(
-         &mut sm,
-         &mut receiver,
-         BasicEvt::A,
-         vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
-     );
-     
-     test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
- 
-     test_evt_injection(
-         &mut sm,
-         &mut receiver,
-         BasicEvt::F,
-         vec![
-             "S1-HANDLES-F",
-             "S122-EXIT",
-             "S12-EXIT",
-             "S1-EXIT",
-             "S1-ENTRY",
-             "S1-INIT",
-             "S11-ENTRY",
-         ],
-     );
+
+    test_evt_injection(
+        &mut sm,
+        &mut receiver,
+        BasicEvt::A,
+        vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
+    );
+
+    test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
+
+    test_evt_injection(
+        &mut sm,
+        &mut receiver,
+        BasicEvt::F,
+        vec![
+            "S1-HANDLES-F",
+            "S122-EXIT",
+            "S12-EXIT",
+            "S1-EXIT",
+            "S1-ENTRY",
+            "S1-INIT",
+            "S11-ENTRY",
+        ],
+    );
 }

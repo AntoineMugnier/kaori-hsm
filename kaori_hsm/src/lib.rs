@@ -1,17 +1,17 @@
-//! # kaori_hsm State machine framework 
+//! # kaori_hsm State machine framework
 //! kaori_hsm is a framework for developing Hierarchical State Machine(HSM) in Rust. Lightweight
 //! performant, and free of any dynamic memory allocation, it is ideal for firmware development,
 //! but it can also be used for any other kind of application.
 //!
 //!# What are Hierarchical state machines ?
 //! States machines are software enties processing events differently depending on the state
-//! they are. A state machine starts in an intial state. Different input events may lead to 
+//! they are. A state machine starts in an intial state. Different input events may lead to
 //! different actions being performed by the state machine and can trigger transition to other
 //! states. In a conventional (flat) state machine, states are parallel and do not share behavior.
-//! 
+//!
 //! Hierarchical State Machines are state machines which can have nested states. By
 //! having the capability of inheriting the behavior of upper states, code duplication is avoided
-//! and the state machine become more comprehensible. HSMs are particularly useful for designing 
+//! and the state machine become more comprehensible. HSMs are particularly useful for designing
 //! state machines with complex behavior and a lot of states.
 //!
 //! ## How to
@@ -19,18 +19,20 @@
 //! data and then you will need to implement the following traits of the framework on it: the [`ProtoStateMachine`]
 //! trait and as many variant of the [`State<Tag>`] trait as you want to define states.
 //!
-//! After that, you will assemble a complete `StateMachine` by sending an instance of your structure which
-//! implements the mentioned traits as argument to the [`StateMachine::from()`] function.
-//! 
-//! A single call to the [`StateMachine::init()`] method will initialize the state machine and lead
-//! it to its first state.It will after be ready to process events through the [`StateMachine::dispatch()`] method
+//! The following sequence has to be followed in order to build an operational state machine.
+//! The builder pattern in used in order to enforce statically the steps order:
+//! - Create an instance of the structure you previously defined.
+//! - Call the [`InitStateMachine::from()`] function with the instance as argument. A ['InitStateMachine'] instance will be returned.
+//! - Call the [`InitStateMachine::init()`] method on this instance. It will initialize the state machine and lead
+//! it to transition to its first state. A [`StateMachine`] instance will be returned from this method, constituing the operational state machine.
+//! This structure only exposes the [`StateMachine::dispatch()`] method used for injecting events into it.
 //!
 //!```rust
 //!# use std::sync::mpsc::channel;
 //!# use std::sync::mpsc::Receiver;
 //!# use std::sync::mpsc::Sender;
 //!# use std::sync::mpsc::TryRecvError;
-//! use kaori_hsm::*; 
+//! use kaori_hsm::*;
 //! enum BasicEvt{
 //!     A,
 //!     B,
@@ -49,13 +51,11 @@
 //!     fn post_string(&self, s : &str){
 //!         self.sender.send(String::from(s)).unwrap();
 //!     }
-//! }
-//!
-//! impl ProtoStateMachine for BasicStateMachine{
+//! } impl ProtoStateMachine for BasicStateMachine{
 //!   type Evt = BasicEvt;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
-//!       self.post_string("TOP_INIT"); 
+//!       self.post_string("TOP_INIT");
 //!       init_transition!(S1)
 //!   }
 //! }
@@ -129,7 +129,7 @@
 //!#         TryRecvError::Disconnected => panic!("Disconnected"),
 //!#     })
 //!# }
-//!# 
+//!#
 //!# fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
 //!#     for (index, &expectation) in expectations.iter().enumerate() {
 //!#         let sm_output = collect_sm_output(receiver);
@@ -140,7 +140,7 @@
 //!#             )
 //!#         }
 //!#     }
-//!# 
+//!#
 //!#     // Check that we have expected all the output of the SM
 //!#     match receiver.try_recv().err() {
 //!#         Some(TryRecvError::Empty) => { /* OK */ }
@@ -154,12 +154,12 @@
 //!# }
 //!
 //!    let (sender, mut receiver) = channel();
-//! 
+//!
 //!    let basic_state_machine = BasicStateMachine::new(sender);
 //!
-//!    let mut sm = StateMachine::from(basic_state_machine);
-//!    
-//!    sm.init();
+//!    let ism = InitStateMachine::from(basic_state_machine);
+//!
+//!    let mut sm = ism.init();
 //!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT"]);
 //!    
 //!    sm.dispatch(&BasicEvt::A);
@@ -180,12 +180,14 @@
 //!```
 
 #![no_std]
+mod init_state_machine;
 mod proto_state_machine;
+mod sm_business_logic;
 mod state;
 mod state_machine;
-
-pub use state::{InitResult, ParentState, State, HandleResult};
+pub use init_state_machine::InitStateMachine;
 pub use proto_state_machine::ProtoStateMachine;
+pub use state::{HandleResult, InitResult, ParentState, State};
 pub use state_machine::StateMachine;
 extern crate kaori_hsm_derive;
 pub use kaori_hsm_derive::state;
@@ -194,7 +196,7 @@ pub use kaori_hsm_derive::state;
 /// initial transition. Can be either used in [`ProtoStateMachine::init`] or [`State<Tag>::init`]
 /// # Example
 /// ```
-///# use kaori_hsm::*; 
+///# use kaori_hsm::*;
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -237,15 +239,15 @@ pub use kaori_hsm_derive::state;
 #[macro_export]
 macro_rules! init_transition {
     ($target_state_tag:ident) => {
-        kaori_hsm::InitResult::TargetState(kaori_hsm::State::<$target_state_tag>::core_handle) 
-    }
+        kaori_hsm::InitResult::TargetState(kaori_hsm::State::<$target_state_tag>::core_handle)
+    };
 }
 
 /// Sugar for constructing a `HandleResult::Transition` enum variant containing the target of the
 /// transition
 /// # Example
 /// ```
-///# use kaori_hsm::*; 
+///# use kaori_hsm::*;
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -270,10 +272,10 @@ macro_rules! init_transition {
 ///#             }
 ///#         }
 ///#     }    
-///# 
+///#
 /// #[state(super_state= Top)]
 /// impl State<S0> for BasicStateMachine{
-/// 
+///
 ///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///         match evt{
 ///             BasicEvt::A => {
@@ -287,12 +289,12 @@ macro_rules! init_transition {
 #[macro_export]
 macro_rules! transition {
     ($target_state_tag:ident) => {
-        kaori_hsm::HandleResult::Transition(kaori_hsm::State::<$target_state_tag>::core_handle) 
-    }
+        kaori_hsm::HandleResult::Transition(kaori_hsm::State::<$target_state_tag>::core_handle)
+    };
 }
 /// Sugar for constructing a `HandleResult::Ignored` enum variant meaning no event has been handled
 /// ```
-///# use kaori_hsm::*; 
+///# use kaori_hsm::*;
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -310,7 +312,7 @@ macro_rules! transition {
 ///#
 /// #[state(super_state= Top)]
 /// impl State<S0> for BasicStateMachine{
-/// 
+///
 ///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///         match evt{
 ///             _ => ignored!()
@@ -320,12 +322,14 @@ macro_rules! transition {
 ///```
 #[macro_export]
 macro_rules! ignored {
-    () => {kaori_hsm::HandleResult::Ignored}
+    () => {
+        kaori_hsm::HandleResult::Ignored
+    };
 }
 /// Sugar for constructing a `HandleResult::Handle` enum variant meaning the event has been caught
 /// without transition occuring.
 /// ```
-///# use kaori_hsm::*; 
+///# use kaori_hsm::*;
 ///# enum BasicEvt{A}
 ///#
 ///# struct BasicStateMachine{
@@ -343,7 +347,7 @@ macro_rules! ignored {
 ///#
 /// #[state(super_state= Top)]
 /// impl State<S0> for BasicStateMachine{
-/// 
+///
 ///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///         match evt{
 ///             BasicEvt::A => {
@@ -356,5 +360,7 @@ macro_rules! ignored {
 ///```
 #[macro_export]
 macro_rules! handled {
-    () => {kaori_hsm::HandleResult::Handled}
+    () => {
+        kaori_hsm::HandleResult::Handled
+    };
 }
