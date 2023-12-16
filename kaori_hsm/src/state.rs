@@ -1,38 +1,42 @@
 use crate::proto_state_machine::ProtoStateMachine;
 
-pub(crate) mod denatured{
+pub(crate) mod denatured {
 
-    pub struct OpaqueType{}
+    pub struct OpaqueType {}
     pub type OpaquePtr = *mut OpaqueType;
     pub type StateFn = fn(OpaquePtr, &CoreEvt) -> CoreHandleResult;
-    pub type UserEvt = OpaquePtr ;
+    pub type UserEvt = OpaquePtr;
 
-
-    pub enum HandleResult{
+    #[allow(unused)]
+    pub enum HandleResult {
         Ignored,
         Handled,
         Transition(StateFn),
     }
 
+    #[allow(unused)]
     pub enum CoreHandleResult {
-    Ignored(ParentState),
-    Handled,
-    Transition(StateFn),
-    GetParentStateResult(ParentState),
-    InitResult(InitResult),
+        Ignored(ParentState),
+        Handled,
+        Transition(StateFn),
+        GetParentStateResult(ParentState),
+        InitResult(InitResult),
     }
 
+    #[allow(unused)]
     pub enum ParentState {
         TopReached,
         Exists(StateFn),
     }
-    
+
+    #[allow(unused)]
     pub enum InitResult {
         NotImplemented,
         TargetState(StateFn),
     }
-    
-    pub enum CoreEvt<'a>{
+
+    #[allow(unused)]
+    pub enum CoreEvt<'a> {
         InitEvt,
         EntryEvt,
         ExitEvt,

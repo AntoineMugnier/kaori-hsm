@@ -18,7 +18,7 @@ impl ProtoStateMachine for BasicStateMachine {
         init_transition!(S0)
     }
 }
-/// Example 
+/// Example
 #[state(super_state= Top)]
 impl State<S0> for BasicStateMachine {
     fn exit(&mut self) {
@@ -62,8 +62,9 @@ impl State<S1> for BasicStateMachine {
 }
 
 fn main() {
-    let mut sm = StateMachine::from(BasicStateMachine {});
-    sm.init();
+    let ism = InitStateMachine::from(BasicStateMachine {});
+
+    let mut sm = ism.init();
 
     let evt_a = BasicEvt::A;
     sm.dispatch(&evt_a);
