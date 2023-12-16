@@ -213,12 +213,12 @@ where
     /// # Implementation policy
     /// No default implementation, must be implemented for every state.
     /// This method implementation is typically a `match` statement on the event variant. The handling of each event may return either:
-    /// - `HanbleResult::Transition`: immediately trigger a transition to the target state, which may
+    /// - [`HandleResult::Transition`]: immediately trigger a transition to the target state, which may
     /// become the next current state of the state machine.
-    /// - `HandleResult::Handled`: The event is handled without transition
+    /// - [`HandleResult::Handled`]: The event is handled without transition
     ///
     /// In the case the event does not match any expected event, `HandleResult::Ignored` must be
-    /// returned. In this case, `handle()` methods of upper states will be called with the ignored
+    /// returned. In this case, [`State::handle()`] methods of upper states will be called with the ignored
     /// event.
     // *Note: Its is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead of assembling manually the enum variant of `HandleResult`*
     fn handle(&mut self, evt: &<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
