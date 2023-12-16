@@ -13,7 +13,7 @@ enum BasicEvt {
     C,
     D,
     E,
-    F
+    F,
 }
 
 struct BasicStateMachine {
@@ -115,7 +115,7 @@ impl State<S12> for BasicStateMachine {
                 self.sender.send(String::from("S12-HANDLES-D")).unwrap();
                 transition!(S121)
             }
-            BasicEvt::E =>{
+            BasicEvt::E => {
                 self.sender.send(String::from("S12-HANDLES-E")).unwrap();
                 transition!(S11)
             }
@@ -221,11 +221,11 @@ fn test_evt_injection(
     expect_output_series(receiver, expectations);
 }
 
-fn test_sm_init (
+fn test_sm_init(
     ism: InitStateMachine<BasicStateMachine>,
     receiver: &mut Receiver<String>,
     expectations: Vec<&str>,
-)-> StateMachine<BasicStateMachine> {
+) -> StateMachine<BasicStateMachine> {
     let sm = ism.init();
     expect_output_series(receiver, expectations);
     sm
@@ -304,7 +304,7 @@ fn hsm_test() {
             "S121-ENTRY",
         ],
     );
- 
+
     test_evt_injection(
         &mut sm,
         &mut receiver,
@@ -324,28 +324,28 @@ fn hsm_test() {
             "S121-ENTRY",
         ],
     );
- 
-     test_evt_injection(
-         &mut sm,
-         &mut receiver,
-         BasicEvt::A,
-         vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
-     );
-     
-     test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
- 
-     test_evt_injection(
-         &mut sm,
-         &mut receiver,
-         BasicEvt::F,
-         vec![
-             "S1-HANDLES-F",
-             "S122-EXIT",
-             "S12-EXIT",
-             "S1-EXIT",
-             "S1-ENTRY",
-             "S1-INIT",
-             "S11-ENTRY",
-         ],
-     );
+
+    test_evt_injection(
+        &mut sm,
+        &mut receiver,
+        BasicEvt::A,
+        vec!["S121-HANDLES-A", "S121-EXIT", "S122-ENTRY"],
+    );
+
+    test_evt_injection(&mut sm, &mut receiver, BasicEvt::B, vec!["S122-HANDLES-B"]);
+
+    test_evt_injection(
+        &mut sm,
+        &mut receiver,
+        BasicEvt::F,
+        vec![
+            "S1-HANDLES-F",
+            "S122-EXIT",
+            "S12-EXIT",
+            "S1-EXIT",
+            "S1-ENTRY",
+            "S1-INIT",
+            "S11-ENTRY",
+        ],
+    );
 }
