@@ -1,12 +1,5 @@
 use crate::state::denatured;
 
-pub(crate) fn default_state(
-    _user_sm: &mut denatured::OpaqueType,
-    _evt: &denatured::CoreEvt,
-) -> denatured::CoreHandleResult {
-    panic!("dispatch() function called on state_machine before init")
-}
-
 pub(crate) fn find_dissociate_states<'a>(
     original_state_link: &'a Link<'a>,
     target_state_link: &'a Link<'a>,
@@ -155,9 +148,8 @@ fn dispatch_init_evt(
 
 pub(crate) fn reach_init_target(
     user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
     target_state_fn: denatured::StateFn,
-) {
+) -> denatured::StateFn {
     let mut current_target_state_fn = target_state_fn;
 
     while let denatured::InitResult::TargetState(next_target_state) =
@@ -167,7 +159,7 @@ pub(crate) fn reach_init_target(
         dispatch_entry_evt(user_state_machine, current_target_state_fn);
     }
 
-    *current_state_fn = current_target_state_fn;
+    current_target_state_fn
 }
 
 pub(crate) fn exit_substates(
@@ -196,26 +188,20 @@ pub(crate) fn dispatch_entry_evt(
     let entry_evt = denatured::CoreEvt::EntryEvt;
     state_fn(user_state_machine, &entry_evt);
 }
-
 /// Will trigger the execution of the initial pseudostate of the state machine by calling
 /// `ProtoStateMachine::init`. That call will lead to the first state of the machine to be
 /// set.   
 /// This method should only be called once
 pub(crate) fn init(
     user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
     init_result: &denatured::InitResult,
-) {
+) -> denatured::StateFn {
     match init_result {
         denatured::InitResult::TargetState(topmost_init_target_state_fn) => {
             // Reach leaf state
             dispatch_entry_evt(user_state_machine, *topmost_init_target_state_fn);
 
-            reach_init_target(
-                user_state_machine,
-                current_state_fn,
-                *topmost_init_target_state_fn,
-            );
+            reach_init_target(user_state_machine, *topmost_init_target_state_fn)
         }
 
         denatured::InitResult::NotImplemented => panic!("Topmost Init should return a state"),
@@ -255,11 +241,7 @@ pub(crate) fn handle_transition(
     );
 
     let curr_state_after_target_reached = target_state_fn;
-    reach_init_target(
-        user_state_machine,
-        current_state_fn,
-        curr_state_after_target_reached,
-    );
+    *current_state_fn = reach_init_target(user_state_machine, curr_state_after_target_reached);
 }
 
 pub(crate) fn handle_ignored_evt(
