@@ -1,33 +1,5 @@
 use crate::state::denatured;
 
-pub(crate) fn find_dissociate_states<'a>(
-    original_state_link: &'a Link<'a>,
-    target_state_link: &'a Link<'a>,
-) -> (Option<&'a Link<'a>>, Option<&'a Link<'a>>) {
-    let mut original_state_link = original_state_link;
-    let mut target_state_link = target_state_link;
-
-    loop {
-        if original_state_link.state_fn != target_state_link.state_fn {
-            return (Some(original_state_link), Some(target_state_link));
-        }
-
-        if let Some(next_original_state_link) = original_state_link.next_link {
-            if let Some(next_target_state_link) = target_state_link.next_link {
-                original_state_link = next_original_state_link;
-                target_state_link = next_target_state_link;
-            } else {
-                return (original_state_link.next_link, None);
-            }
-        } else {
-            if target_state_link.next_link.is_some() {
-                return (None, target_state_link.next_link);
-            } else {
-                return (None, None);
-            }
-        }
-    }
-}
 
 pub(crate) fn enter_substates(
     user_state_machine: &mut denatured::OpaqueType,
@@ -47,68 +19,7 @@ pub(crate) fn reach_target_state(
     original_state_link: Link,
     target_state_link: Link,
 ) {
-    if let denatured::ParentState::Exists(original_state_parent_fn) =
-        dispatch_get_super_state(user_state_machine, original_state_link.state_fn)
-    {
-        let new_original_state_link = Link {
-            state_fn: original_state_parent_fn,
-            next_link: Some(&original_state_link),
-        };
-
-        if let denatured::ParentState::Exists(target_state_parent_fn) =
-            dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
-        {
-            let new_target_state_link = Link {
-                state_fn: target_state_parent_fn,
-                next_link: Some(&target_state_link),
-            };
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                new_original_state_link,
-                new_target_state_link,
-            )
-        } else {
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                new_original_state_link,
-                target_state_link,
-            )
-        }
-    } else {
-        if let denatured::ParentState::Exists(parent_state_fn) =
-            dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
-        {
-            let new_target_state_link = Link {
-                state_fn: parent_state_fn,
-                next_link: Some(&target_state_link),
-            };
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                original_state_link,
-                new_target_state_link,
-            )
-        } else {
-            let (dissociated_original_state, dissociated_target_state) =
-                find_dissociate_states(&original_state_link, &target_state_link);
-
-            if let Some(dissociated_original_state_link) = dissociated_original_state {
-                exit_substates(
-                    user_state_machine,
-                    *current_state_fn,
-                    dissociated_original_state_link.state_fn,
-                );
-                dispatch_exit_evt(user_state_machine, dissociated_original_state_link.state_fn);
-            }
-
-            if let Some(dissociated_target_state_link) = dissociated_target_state {
-                dispatch_entry_evt(user_state_machine, dissociated_target_state_link.state_fn);
-                enter_substates(user_state_machine, dissociated_target_state_link);
-            }
-        }
-    }
+    
 }
 
 pub(crate) fn dispatch_get_super_state(
