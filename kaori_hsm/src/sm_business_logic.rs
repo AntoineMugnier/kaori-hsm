@@ -5,6 +5,7 @@ pub(crate) fn enter_substates(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_link: &Link,
 ) {
+    dispatch_entry_evt(user_state_machine, target_state_link.state_fn);
     let mut target_state_link = target_state_link;
 
     while let Some(next_state) = target_state_link.next_link {
@@ -12,13 +13,49 @@ pub(crate) fn enter_substates(
         target_state_link = next_state;
     }
 }
+pub(crate) fn search_matching_state(
+    user_state_machine: &mut denatured::OpaqueType,
+    target_state_link : &Link,
+    original_state_fn : denatured::StateFn
+) {
+    let mut state_link = target_state_link;
+    while{
+        if state_link.state_fn == original_state_fn{
+            return 
+        }
+        state_link.next_link.is_some()
+    }{
+        state_link = state_link.next_link.unwrap();
+    }
+    
+    if let denatured::ParentState::Exists(parent_state_fn) =
+            dispatch_get_super_state(user_state_machine, original_state_fn)
+        {
+        dispatch_exit_evt(user_state_machine, original_state_fn);
+        search_matching_state(user_state_machine, target_state_link, parent_state_fn)
+    }else {
+            panic!("Target state not found when ascending state hierarchy")
+        }
+}
 
 pub(crate) fn reach_target_state(
     user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
-    original_state_link: Link,
     target_state_link: Link,
+    original_state_fn: denatured::StateFn,
 ) {
+    
+        if let denatured::ParentState::Exists(parent_state_fn) =
+            dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
+        {
+            let parent_state_link = Link {
+                state_fn: parent_state_fn,
+                next_link: Some(&target_state_link),
+            };
+            return reach_target_state(user_state_machine, parent_state_link, original_state_fn)
+        } else {
+            search_matching_state(user_state_machine, &target_state_link, original_state_fn);
+            enter_substates(user_state_machine, &target_state_link) 
+        }
     
 }
 
@@ -127,32 +164,24 @@ pub(crate) fn handle_transition(
 ) {
     exit_substates(user_state_machine, *current_state_fn, handling_state_fn);
 
-    *current_state_fn = handling_state_fn;
-
     // Special handling in case of targetting the current state
     if handling_state_fn == target_state_fn {
         dispatch_exit_evt(user_state_machine, handling_state_fn);
         dispatch_entry_evt(user_state_machine, handling_state_fn);
     }
-
-    let curr_state_link = Link {
-        state_fn: handling_state_fn,
-        next_link: None,
-    };
-    let target_state_link = Link {
-        state_fn: target_state_fn,
-        next_link: None,
-    };
-
-    reach_target_state(
-        user_state_machine,
-        current_state_fn,
-        curr_state_link,
-        target_state_link,
-    );
-
-    let curr_state_after_target_reached = target_state_fn;
-    *current_state_fn = reach_init_target(user_state_machine, curr_state_after_target_reached);
+    else{
+        let target_state_link = Link {
+            state_fn: target_state_fn,
+            next_link: None,
+        };
+        
+        reach_target_state(
+            user_state_machine,
+            target_state_link,
+            handling_state_fn,
+        );
+    }
+    *current_state_fn = reach_init_target(user_state_machine, target_state_fn);
 }
 
 pub(crate) fn handle_ignored_evt(
