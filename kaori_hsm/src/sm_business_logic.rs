@@ -4,24 +4,31 @@ use crate::state::denatured;
 pub(crate) fn enter_substates(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_link: &Link,
+    cutout_state_fn : denatured::StateFn
 ) {
-    dispatch_entry_evt(user_state_machine, target_state_link.state_fn);
     let mut target_state_link = target_state_link;
-
-    while let Some(next_state) = target_state_link.next_link {
-        dispatch_entry_evt(user_state_machine, next_state.state_fn);
-        target_state_link = next_state;
+    let mut ignore_link = true;
+    while{
+        if target_state_link.state_fn == cutout_state_fn{
+            ignore_link = false;
+        }
+        target_state_link.next_link.is_some()
+   }{
+        target_state_link = target_state_link.next_link.unwrap();
+        if ignore_link == false{
+            dispatch_entry_evt(user_state_machine, target_state_link.state_fn);
+        }
     }
 }
 pub(crate) fn search_matching_state(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_link : &Link,
     original_state_fn : denatured::StateFn
-) {
+)-> denatured::StateFn {
     let mut state_link = target_state_link;
     while{
         if state_link.state_fn == original_state_fn{
-            return 
+            return original_state_fn 
         }
         state_link.next_link.is_some()
     }{
@@ -32,7 +39,7 @@ pub(crate) fn search_matching_state(
             dispatch_get_super_state(user_state_machine, original_state_fn)
         {
         dispatch_exit_evt(user_state_machine, original_state_fn);
-        search_matching_state(user_state_machine, target_state_link, parent_state_fn)
+        return search_matching_state(user_state_machine, target_state_link, parent_state_fn)
     }else {
             panic!("Target state not found when ascending state hierarchy")
         }
@@ -51,10 +58,10 @@ pub(crate) fn reach_target_state(
                 state_fn: parent_state_fn,
                 next_link: Some(&target_state_link),
             };
-            return reach_target_state(user_state_machine, parent_state_link, original_state_fn)
+            reach_target_state(user_state_machine, parent_state_link, original_state_fn)
         } else {
-            search_matching_state(user_state_machine, &target_state_link, original_state_fn);
-            enter_substates(user_state_machine, &target_state_link) 
+            let common_state = search_matching_state(user_state_machine, &target_state_link, original_state_fn);
+            enter_substates(user_state_machine, &target_state_link, common_state)
         }
     
 }
