@@ -1,6 +1,8 @@
 use crate::state::denatured;
 
-
+pub fn top_state_fn(_user_state_machine : denatured::OpaquePtr, _evt: &denatured::CoreEvt) -> denatured::CoreHandleResult{
+    panic!("Top state function should never be called !");
+}
 pub(crate) fn enter_substates(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_link: &Link,
@@ -35,13 +37,14 @@ pub(crate) fn search_matching_state(
         state_link = state_link.next_link.unwrap();
     }
     
+    dispatch_exit_evt(user_state_machine, original_state_fn);
+    
     if let denatured::ParentState::Exists(parent_state_fn) =
             dispatch_get_super_state(user_state_machine, original_state_fn)
         {
-        dispatch_exit_evt(user_state_machine, original_state_fn);
         return search_matching_state(user_state_machine, target_state_link, parent_state_fn)
     }else {
-            panic!("Target state not found when ascending state hierarchy")
+        return search_matching_state(user_state_machine, target_state_link, top_state_fn);
         }
 }
 
@@ -60,7 +63,12 @@ pub(crate) fn reach_target_state(
             };
             reach_target_state(user_state_machine, parent_state_link, original_state_fn)
         } else {
-            let common_state = search_matching_state(user_state_machine, &target_state_link, original_state_fn);
+
+        let parent_state_link = Link {
+                state_fn: top_state_fn,
+                next_link: Some(&target_state_link),
+            };
+            let common_state = search_matching_state(user_state_machine, &parent_state_link, original_state_fn);
             enter_substates(user_state_machine, &target_state_link, common_state)
         }
     
