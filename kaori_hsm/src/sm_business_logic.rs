@@ -75,6 +75,7 @@ pub(crate) fn reach_target_state(
     }
 }
 
+#[inline(always)]
 pub(crate) fn dispatch_get_super_state(
     user_state_machine: &mut denatured::OpaqueType,
     state_fn: denatured::StateFn,
