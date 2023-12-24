@@ -25,29 +25,36 @@ pub(crate) fn enter_substates(
         }
     }
 }
-pub(crate) fn search_matching_state(
+
+// Search the LCA (Least Common Ancestor) state between the target and the handling state. Also
+// proceed to exiting every state in the handling state lineage before the LCA is found.
+pub(crate) fn search_lca_state(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_link: &Link,
     original_state_fn: denatured::StateFn,
 ) -> denatured::StateFn {
-    let mut state_link = target_state_link;
-    while {
-        if state_link.state_fn == original_state_fn {
-            return original_state_fn;
+    let mut original_state_fn = original_state_fn;
+    loop{
+        let mut state_link = target_state_link;
+
+        while {
+            if state_link.state_fn == original_state_fn {
+                return original_state_fn;
+            }
+            state_link.next_link.is_some()
+        } {
+            state_link = state_link.next_link.unwrap();
         }
-        state_link.next_link.is_some()
-    } {
-        state_link = state_link.next_link.unwrap();
-    }
 
-    dispatch_exit_evt(user_state_machine, original_state_fn);
+        dispatch_exit_evt(user_state_machine, original_state_fn);
+        
 
-    if let denatured::ParentState::Exists(parent_state_fn) =
-        dispatch_get_super_state(user_state_machine, original_state_fn)
-    {
-        return search_matching_state(user_state_machine, target_state_link, parent_state_fn);
-    } else {
-        return search_matching_state(user_state_machine, target_state_link, top_state_fn);
+        if let denatured::ParentState::Exists(parent_state_fn) =
+            dispatch_get_super_state(user_state_machine, original_state_fn) {
+            original_state_fn = parent_state_fn;
+        } else{
+           original_state_fn = top_state_fn;  
+        }
     }
 }
 
@@ -70,7 +77,7 @@ pub(crate) fn reach_target_state(
             next_link: Some(&target_state_link),
         };
         let common_state =
-            search_matching_state(user_state_machine, &parent_state_link, original_state_fn);
+            search_lca_state(user_state_machine, &parent_state_link, original_state_fn);
         enter_substates(user_state_machine, &target_state_link, common_state)
     }
 }
