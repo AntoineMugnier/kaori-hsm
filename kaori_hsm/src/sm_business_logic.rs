@@ -34,7 +34,7 @@ pub(crate) fn search_lca_state(
     original_state_fn: denatured::StateFn,
 ) -> denatured::StateFn {
     let mut original_state_fn = original_state_fn;
-    loop{
+    loop {
         let mut state_link = target_state_link;
 
         while {
@@ -47,13 +47,13 @@ pub(crate) fn search_lca_state(
         }
 
         dispatch_exit_evt(user_state_machine, original_state_fn);
-        
 
         if let denatured::ParentState::Exists(parent_state_fn) =
-            dispatch_get_super_state(user_state_machine, original_state_fn) {
+            dispatch_get_super_state(user_state_machine, original_state_fn)
+        {
             original_state_fn = parent_state_fn;
-        } else{
-           original_state_fn = top_state_fn;  
+        } else {
+            original_state_fn = top_state_fn;
         }
     }
 }
