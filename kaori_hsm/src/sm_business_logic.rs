@@ -1,151 +1,94 @@
 use crate::state::denatured;
 
-pub(crate) fn find_dissociate_states<'a>(
-    original_state_link: &'a Link<'a>,
-    target_state_link: &'a Link<'a>,
-) -> (Option<&'a Link<'a>>, Option<&'a Link<'a>>) {
-    let mut original_state_link = original_state_link;
-    let mut target_state_link = target_state_link;
-
-    loop {
-        if original_state_link.state_fn != target_state_link.state_fn {
-            return (Some(original_state_link), Some(target_state_link));
-        }
-
-        if let Some(next_original_state_link) = original_state_link.next_link {
-            if let Some(next_target_state_link) = target_state_link.next_link {
-                original_state_link = next_original_state_link;
-                target_state_link = next_target_state_link;
-            } else {
-                return (original_state_link.next_link, None);
-            }
-        } else {
-            if target_state_link.next_link.is_some() {
-                return (None, target_state_link.next_link);
-            } else {
-                return (None, None);
-            }
-        }
-    }
+pub(crate) struct Link<'a> {
+    state_fn: denatured::StateFn,
+    next_link: Option<&'a Link<'a>>,
+}
+// Function existing only in order to attribute a unique adress to what is refered as the
+// top state. Is not meant to be called.
+pub fn top_state_fn(
+    _user_state_machine: *mut denatured::OpaqueType,
+    _evt: &denatured::CoreEvt,
+) -> denatured::CoreHandleResult {
+    panic!("Top state function should never be called !");
 }
 
-pub(crate) fn enter_substates(
-    user_state_machine: &mut denatured::OpaqueType,
-    target_state_link: &Link,
-) {
-    let mut target_state_link = target_state_link;
-
-    while let Some(next_state) = target_state_link.next_link {
-        dispatch_entry_evt(user_state_machine, next_state.state_fn);
-        target_state_link = next_state;
-    }
-}
-
-pub(crate) fn reach_target_state(
+// Dispatch the user event to the current state.
+pub(crate) fn dispatch_evt_to_current_state(
     user_state_machine: &mut denatured::OpaqueType,
     current_state_fn: &mut denatured::StateFn,
-    original_state_link: Link,
-    target_state_link: Link,
+    evt: &denatured::CoreEvt,
 ) {
-    if let denatured::ParentState::Exists(original_state_parent_fn) =
-        dispatch_get_super_state(user_state_machine, original_state_link.state_fn)
-    {
-        let new_original_state_link = Link {
-            state_fn: original_state_parent_fn,
-            next_link: Some(&original_state_link),
+    dispatch_evt_to_handling_state(user_state_machine, current_state_fn, *current_state_fn, evt)
+}
+
+// Dispatch the user event to a state different from the current one.
+pub(crate) fn dispatch_evt_to_handling_state(
+    user_state_machine: &mut denatured::OpaqueType,
+    current_state_fn: &mut denatured::StateFn,
+    handling_state_fn: denatured::StateFn,
+    evt: &denatured::CoreEvt,
+) {
+    let core_handle_result = handling_state_fn(user_state_machine, evt);
+
+    // Treat result of the event dispatch
+    match core_handle_result {
+        denatured::CoreHandleResult::Handled => {}
+        denatured::CoreHandleResult::Ignored(parent_state_fn) => {
+            dispatch_evt_to_parent(user_state_machine, current_state_fn, parent_state_fn, evt)
+        }
+        denatured::CoreHandleResult::Transition(target_state_fn) => handle_transition(
+            user_state_machine,
+            current_state_fn,
+            handling_state_fn,
+            target_state_fn,
+        ),
+        _ => {}
+    }
+}
+
+// Dispatch the user event to the parent state at the condition it is not the top state.
+pub(crate) fn dispatch_evt_to_parent(
+    user_state_machine: &mut denatured::OpaqueType,
+    current_state_fn: &mut denatured::StateFn,
+    parent_state_variant: denatured::ParentState,
+    evt: &denatured::CoreEvt,
+) {
+    match parent_state_variant {
+        denatured::ParentState::Exists(super_state) => {
+            dispatch_evt_to_handling_state(user_state_machine, current_state_fn, super_state, evt)
+        }
+        denatured::ParentState::TopReached => {}
+    }
+}
+
+// Take a transition from the `handling_state_fn` to the `target_state_fn`, thus setting
+// `target_state_fn` as the new current state of the state machine at the end of the process.
+pub(crate) fn handle_transition(
+    user_state_machine: &mut denatured::OpaqueType,
+    current_state_fn: &mut denatured::StateFn,
+    handling_state_fn: denatured::StateFn,
+    target_state_fn: denatured::StateFn,
+) {
+    exit_substates(user_state_machine, *current_state_fn, handling_state_fn);
+
+    // Special handling in case of targetting the current state
+    if handling_state_fn == target_state_fn {
+        dispatch_exit_evt(user_state_machine, handling_state_fn);
+        dispatch_entry_evt(user_state_machine, handling_state_fn);
+    } else {
+        let target_state_link = Link {
+            state_fn: target_state_fn,
+            next_link: None,
         };
 
-        if let denatured::ParentState::Exists(target_state_parent_fn) =
-            dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
-        {
-            let new_target_state_link = Link {
-                state_fn: target_state_parent_fn,
-                next_link: Some(&target_state_link),
-            };
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                new_original_state_link,
-                new_target_state_link,
-            )
-        } else {
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                new_original_state_link,
-                target_state_link,
-            )
-        }
-    } else {
-        if let denatured::ParentState::Exists(parent_state_fn) =
-            dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
-        {
-            let new_target_state_link = Link {
-                state_fn: parent_state_fn,
-                next_link: Some(&target_state_link),
-            };
-            reach_target_state(
-                user_state_machine,
-                current_state_fn,
-                original_state_link,
-                new_target_state_link,
-            )
-        } else {
-            let (dissociated_original_state, dissociated_target_state) =
-                find_dissociate_states(&original_state_link, &target_state_link);
-
-            if let Some(dissociated_original_state_link) = dissociated_original_state {
-                exit_substates(
-                    user_state_machine,
-                    *current_state_fn,
-                    dissociated_original_state_link.state_fn,
-                );
-                dispatch_exit_evt(user_state_machine, dissociated_original_state_link.state_fn);
-            }
-
-            if let Some(dissociated_target_state_link) = dissociated_target_state {
-                dispatch_entry_evt(user_state_machine, dissociated_target_state_link.state_fn);
-                enter_substates(user_state_machine, dissociated_target_state_link);
-            }
-        }
+        reach_target_state(user_state_machine, target_state_link, handling_state_fn);
     }
+    *current_state_fn = reach_init_target(user_state_machine, target_state_fn);
 }
 
-pub(crate) fn dispatch_get_super_state(
-    user_state_machine: &mut denatured::OpaqueType,
-    state_fn: denatured::StateFn,
-) -> denatured::ParentState {
-    let get_parent_state_evt = denatured::CoreEvt::GetParentStateEvt;
-
-    let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
-
-    if let denatured::CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result {
-        parent_state_fn
-    } else {
-        panic!("Variant returned by state fn is not ParentState")
-    }
-}
-
-pub(crate) fn dispatch_exit_evt(
-    user_state_machine: &mut denatured::OpaqueType,
-    state_fn: denatured::StateFn,
-) {
-    let exit_evt = denatured::CoreEvt::ExitEvt;
-    state_fn(user_state_machine, &exit_evt);
-}
-
-fn dispatch_init_evt(
-    user_state_machine: &mut denatured::OpaqueType,
-    state_fn: denatured::StateFn,
-) -> denatured::InitResult {
-    let init_evt = denatured::CoreEvt::InitEvt;
-    let init_result = state_fn(user_state_machine, &init_evt);
-    match init_result {
-        denatured::CoreHandleResult::InitResult(init_result) => return init_result,
-        _ => panic!("Variant returned by state fn is not InitResult"),
-    }
-}
-
+// Descend the state hierarchy by potentially executing the series of initial transitions and entry
+// conditions until the leaf state is reached.
 pub(crate) fn reach_init_target(
     user_state_machine: &mut denatured::OpaqueType,
     target_state_fn: denatured::StateFn,
@@ -162,14 +105,15 @@ pub(crate) fn reach_init_target(
     current_target_state_fn
 }
 
+// Exit all ascendants of the `source_state_fn` until the `lca_state_fn` is reached
 pub(crate) fn exit_substates(
     user_state_machine: &mut denatured::OpaqueType,
-    curr_state_fn: denatured::StateFn,
-    target_state_fn: denatured::StateFn,
+    source_state_fn: denatured::StateFn,
+    lca_state_fn: denatured::StateFn,
 ) {
-    let mut next_state_fn = curr_state_fn;
+    let mut next_state_fn = source_state_fn;
 
-    while next_state_fn != target_state_fn {
+    while next_state_fn != lca_state_fn {
         if let denatured::ParentState::Exists(parent_state_fn) =
             dispatch_get_super_state(user_state_machine, next_state_fn)
         {
@@ -180,7 +124,16 @@ pub(crate) fn exit_substates(
         }
     }
 }
+// Trigger the exit condition of the state `state_fn`
+pub(crate) fn dispatch_exit_evt(
+    user_state_machine: &mut denatured::OpaqueType,
+    state_fn: denatured::StateFn,
+) {
+    let exit_evt = denatured::CoreEvt::ExitEvt;
+    state_fn(user_state_machine, &exit_evt);
+}
 
+// Trigger the entry condition of the state `state_fn`
 pub(crate) fn dispatch_entry_evt(
     user_state_machine: &mut denatured::OpaqueType,
     state_fn: denatured::StateFn,
@@ -188,109 +141,141 @@ pub(crate) fn dispatch_entry_evt(
     let entry_evt = denatured::CoreEvt::EntryEvt;
     state_fn(user_state_machine, &entry_evt);
 }
-/// Will trigger the execution of the initial pseudostate of the state machine by calling
-/// `ProtoStateMachine::init`. That call will lead to the first state of the machine to be
-/// set.   
-/// This method should only be called once
+
+// Recursive function whose role is to create a stack-allocated linked list of all the ancestors
+// of the target state up to the top state. This linked list is then used by the function
+// `search_lca_state()` for finding the lca and transitioning to the target state.
+pub(crate) fn reach_target_state(
+    user_state_machine: &mut denatured::OpaqueType,
+    target_state_link: Link,
+    source_state_fn: denatured::StateFn,
+) {
+    if let denatured::ParentState::Exists(parent_state_fn) =
+        dispatch_get_super_state(user_state_machine, target_state_link.state_fn)
+    {
+        let parent_state_link = Link {
+            state_fn: parent_state_fn,
+            next_link: Some(&target_state_link),
+        };
+        reach_target_state(user_state_machine, parent_state_link, source_state_fn)
+    } else {
+        let parent_state_link = Link {
+            state_fn: top_state_fn,
+            next_link: Some(&target_state_link),
+        };
+        let lca_state_fn =
+            search_lca_state(user_state_machine, &parent_state_link, source_state_fn);
+        enter_substates(user_state_machine, &target_state_link, lca_state_fn)
+    }
+}
+
+// Return the parent state of the `state_fn` state sent as argument
+#[inline(always)]
+pub(crate) fn dispatch_get_super_state(
+    user_state_machine: &mut denatured::OpaqueType,
+    state_fn: denatured::StateFn,
+) -> denatured::ParentState {
+    let get_parent_state_evt = denatured::CoreEvt::GetParentStateEvt;
+
+    let core_handle_result = state_fn(user_state_machine, &get_parent_state_evt);
+
+    if let denatured::CoreHandleResult::GetParentStateResult(parent_state_fn) = core_handle_result {
+        parent_state_fn
+    } else {
+        panic!("Variant returned by state fn is not ParentState")
+    }
+}
+// Descending phase of a transition. Entry condition in every LCA descendant are successively
+// executed until the target state is reach.
+pub(crate) fn enter_substates(
+    user_state_machine: &mut denatured::OpaqueType,
+    target_state_link: &Link,
+    lca_state_fn: denatured::StateFn,
+) {
+    let mut target_state_link = target_state_link;
+    let mut ignore_link = true;
+    while {
+        if target_state_link.state_fn == lca_state_fn {
+            ignore_link = false;
+        }
+        target_state_link.next_link.is_some()
+    } {
+        target_state_link = target_state_link.next_link.unwrap();
+        if ignore_link == false {
+            dispatch_entry_evt(user_state_machine, target_state_link.state_fn);
+        }
+    }
+}
+
+// Search for the LCA (Least Common Ancestor) state between the target and the source state. Also
+// proceed to eventually exiting every state in the handling state lineage before the LCA is found.
+pub(crate) fn search_lca_state(
+    user_state_machine: &mut denatured::OpaqueType,
+    target_state_link: &Link,
+    source_state_fn: denatured::StateFn,
+) -> denatured::StateFn {
+    let mut source_state_fn = source_state_fn;
+    loop {
+        let mut state_link = target_state_link;
+
+        while {
+            if state_link.state_fn == source_state_fn {
+                return source_state_fn;
+            }
+            state_link.next_link.is_some()
+        } {
+            state_link = state_link.next_link.unwrap();
+        }
+
+        dispatch_exit_evt(user_state_machine, source_state_fn);
+
+        if let denatured::ParentState::Exists(parent_state_fn) =
+            dispatch_get_super_state(user_state_machine, source_state_fn)
+        {
+            source_state_fn = parent_state_fn;
+        } else {
+            source_state_fn = top_state_fn;
+        }
+    }
+}
+
+
+
+// Trigger the initial transition of the state `state_fn`
+fn dispatch_init_evt(
+    user_state_machine: &mut denatured::OpaqueType,
+    state_fn: denatured::StateFn,
+) -> denatured::InitResult {
+    let init_evt = denatured::CoreEvt::InitEvt;
+    let init_result = state_fn(user_state_machine, &init_evt);
+    match init_result {
+        denatured::CoreHandleResult::InitResult(init_result) => return init_result,
+        _ => panic!("Variant returned by state fn is not InitResult"),
+    }
+}
+
+
+
+
+
+
+// Reach the first state of the state machine by descending from init conditions into init
+// conditions.
 pub(crate) fn init(
     user_state_machine: &mut denatured::OpaqueType,
     init_result: &denatured::InitResult,
 ) -> denatured::StateFn {
     match init_result {
         denatured::InitResult::TargetState(topmost_init_target_state_fn) => {
-            // Reach leaf state
             dispatch_entry_evt(user_state_machine, *topmost_init_target_state_fn);
-
             reach_init_target(user_state_machine, *topmost_init_target_state_fn)
         }
-
         denatured::InitResult::NotImplemented => panic!("Topmost Init should return a state"),
     }
 }
 
-pub(crate) fn handle_transition(
-    user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
-    handling_state_fn: denatured::StateFn,
-    target_state_fn: denatured::StateFn,
-) {
-    exit_substates(user_state_machine, *current_state_fn, handling_state_fn);
 
-    *current_state_fn = handling_state_fn;
 
-    // Special handling in case of targetting the current state
-    if handling_state_fn == target_state_fn {
-        dispatch_exit_evt(user_state_machine, handling_state_fn);
-        dispatch_entry_evt(user_state_machine, handling_state_fn);
-    }
 
-    let curr_state_link = Link {
-        state_fn: handling_state_fn,
-        next_link: None,
-    };
-    let target_state_link = Link {
-        state_fn: target_state_fn,
-        next_link: None,
-    };
 
-    reach_target_state(
-        user_state_machine,
-        current_state_fn,
-        curr_state_link,
-        target_state_link,
-    );
 
-    let curr_state_after_target_reached = target_state_fn;
-    *current_state_fn = reach_init_target(user_state_machine, curr_state_after_target_reached);
-}
-
-pub(crate) fn handle_ignored_evt(
-    user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
-    parent_state_variant: denatured::ParentState,
-    evt: &denatured::CoreEvt,
-) {
-    match parent_state_variant {
-        denatured::ParentState::Exists(super_state) => {
-            dispatch_core_event(user_state_machine, current_state_fn, super_state, evt)
-        }
-        denatured::ParentState::TopReached => {}
-    }
-}
-
-pub(crate) fn dispatch_core_event(
-    user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
-    handling_state_fn: denatured::StateFn,
-    evt: &denatured::CoreEvt,
-) {
-    let core_handle_result = handling_state_fn(user_state_machine, evt);
-
-    // Treat result of the event dispatch
-    match core_handle_result {
-        denatured::CoreHandleResult::Handled => {}
-        denatured::CoreHandleResult::Ignored(parent_state_fn) => {
-            handle_ignored_evt(user_state_machine, current_state_fn, parent_state_fn, evt)
-        }
-        denatured::CoreHandleResult::Transition(target_state_fn) => handle_transition(
-            user_state_machine,
-            current_state_fn,
-            handling_state_fn,
-            target_state_fn,
-        ),
-        _ => {}
-    }
-}
-
-pub(crate) fn dispatch_event(
-    user_state_machine: &mut denatured::OpaqueType,
-    current_state_fn: &mut denatured::StateFn,
-    evt: &denatured::CoreEvt,
-) {
-    dispatch_core_event(user_state_machine, current_state_fn, *current_state_fn, evt)
-}
-
-pub(crate) struct Link<'a> {
-    state_fn: denatured::StateFn,
-    next_link: Option<&'a Link<'a>>,
-}

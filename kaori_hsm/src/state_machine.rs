@@ -20,7 +20,7 @@ impl<UserStateMachine: ProtoStateMachine> StateMachine<UserStateMachine> {
         // Dispatch user evt to current state
         let evt = CoreEvt::UserEvt { user_evt };
         unsafe {
-            sm_business_logic::dispatch_event(
+            sm_business_logic::dispatch_evt_to_current_state(
                 core::mem::transmute(&mut self.user_state_machine),
                 core::mem::transmute(&mut self.curr_state),
                 core::mem::transmute(&evt),

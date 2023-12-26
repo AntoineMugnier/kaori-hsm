@@ -167,7 +167,7 @@
 //!    
 //!    sm.dispatch(&BasicEvt::B);
 //!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT"]);
-//!
+//! return;
 //!    sm.dispatch(&BasicEvt::B);
 //!    expect_output_series(&receiver, &["S2-HANDLES-B"]);
 //!
