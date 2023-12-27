@@ -36,7 +36,7 @@
 //! case the material you need and its setup are described in the example file. This includes
 //! examples in the `kaori_hsm/examples` directory.
 //!
-//!//!```rust
+//!```rust
 //!# use std::sync::mpsc::channel;
 //!# use std::sync::mpsc::Receiver;
 //!# use std::sync::mpsc::Sender;
@@ -176,7 +176,7 @@
 //!    
 //!    sm.dispatch(&BasicEvt::B);
 //!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT"]);
-//! return;
+//!
 //!    sm.dispatch(&BasicEvt::B);
 //!    expect_output_series(&receiver, &["S2-HANDLES-B"]);
 //!
