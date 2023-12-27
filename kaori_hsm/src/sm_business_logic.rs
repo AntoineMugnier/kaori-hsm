@@ -1,11 +1,13 @@
 use crate::state::denatured;
  
-
 pub struct Link<'a> {
     state_fn: denatured::StateFn,
     next_link: Option<&'a Link<'a>>,
 }
-
+pub enum LCANature<'a> {
+    TopState,
+    State(&'a Link<'a>)
+}
 pub trait SMBusinessLogic {
 
 // Function existing only in order to attribute a unique adress to what is refered as the
@@ -163,13 +165,16 @@ fn reach_target_state(
         };
         Self::reach_target_state(user_state_machine, parent_state_link, source_state_fn)
     } else {
-        let parent_state_link = Link {
-            state_fn: Self::top_state_fn,
-            next_link: Some(&target_state_link),
-        };
-        let lca_state_fn =
-            Self::search_lca_state(user_state_machine, &parent_state_link, source_state_fn);
-        Self::enter_substates(user_state_machine, &target_state_link, lca_state_fn)
+        match Self::search_lca_state(user_state_machine, &target_state_link, source_state_fn){
+                LCANature::State(state_link) => Self::enter_substates(user_state_machine, state_link),
+                LCANature::TopState =>{
+                    let top_state_link = &Link {
+                        state_fn: Self::top_state_fn,
+                        next_link: Some(&target_state_link),
+                    };
+                    Self::enter_substates(user_state_machine, top_state_link)
+                }
+            }
     }
 }
 
@@ -193,38 +198,29 @@ fn dispatch_get_super_state(
 // executed until the target state is reach.
 fn enter_substates(
     user_state_machine: &mut denatured::OpaqueType,
-    target_state_link: &Link,
-    lca_state_fn: denatured::StateFn,
+    lca_state_link: &Link,
 ) {
-    let mut target_state_link = target_state_link;
-    let mut ignore_link = true;
-    while {
-        if target_state_link.state_fn == lca_state_fn {
-            ignore_link = false;
+        let mut state_link = lca_state_link;
+        while let Some(child_state_link) = state_link.next_link{
+           Self::dispatch_entry_evt(user_state_machine, child_state_link.state_fn);
+            state_link = child_state_link;
         }
-        target_state_link.next_link.is_some()
-    } {
-        target_state_link = target_state_link.next_link.unwrap();
-        if ignore_link == false {
-            Self::dispatch_entry_evt(user_state_machine, target_state_link.state_fn);
-        }
-    }
 }
 
 // Search for the LCA (Least Common Ancestor) state between the target and the source state. Also
 // proceed to eventually exiting every state in the handling state lineage before the LCA is found.
-fn search_lca_state(
+fn search_lca_state<'a>(
     user_state_machine: &mut denatured::OpaqueType,
-    target_state_link: &Link,
+    last_state_link: &'a Link<'a>,
     source_state_fn: denatured::StateFn,
-) -> denatured::StateFn {
+) -> LCANature<'a> {
     let mut source_state_fn = source_state_fn;
     loop {
-        let mut state_link = target_state_link;
+        let mut state_link = last_state_link;
 
         while {
             if state_link.state_fn == source_state_fn {
-                return source_state_fn;
+                return LCANature::State(state_link);
             }
             state_link.next_link.is_some()
         } {
@@ -238,7 +234,7 @@ fn search_lca_state(
         {
             source_state_fn = parent_state_fn;
         } else {
-            source_state_fn = Self::top_state_fn;
+           return LCANature::TopState;
         }
     }
 }
@@ -257,11 +253,6 @@ fn dispatch_init_evt(
         _ => panic!("Variant returned by state fn is not InitResult"),
     }
 }
-
-
-
-
-
 
 // Reach the first state of the state machine by descending from init conditions into init
 // conditions.
