@@ -1,23 +1,25 @@
-//! # kaori_hsm State machine framework
-//! kaori_hsm is a framework for developing Hierarchical State Machine(HSM) in Rust. Lightweight
-//! performant, and free of any dynamic memory allocation, it is ideal for firmware development,
-//! but it can also be used for any other kind of application.
+//! # kaori_hsm State machine library
+//! kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Lightweigness
+//! and execution speed are primary focuses of this library as it is designed to run on systems with
+//! low resources such as microcontrollers. However, this library is hardware-independent and you
+//! can run it on the support you like such as your computer.
 //!
 //!# What are Hierarchical state machines ?
-//! States machines are software enties processing events differently depending on the state
-//! they are. A state machine starts in an intial state. Different input events may lead to
-//! different actions being performed by the state machine and can trigger transition to other
-//! states. In a conventional (flat) state machine, states are parallel and do not share behavior.
+//! States machines are software entities processing events differently depending on the state in
+//! which they are. Different input events may lead to different actions being performed by the state
+//! machine and can trigger transition to other states. 
 //!
-//! Hierarchical State Machines are state machines which can have nested states. By
-//! having the capability of inheriting the behavior of upper states, code duplication is avoided
-//! and the state machine become more comprehensible. HSMs are particularly useful for designing
-//! state machines with complex behavior and a lot of states.
+//! Hierarchical State Machines are state machines which can have nested states. This means that if
+//! an event cannot be handled in a state, its super state could eventually handle it.
+//! HSMs are therefore particularly useful for designing state machines with complex behavior.
+//! 
+//! For understanding how state machines and especially HSMs work, I especially recommend the video series
+//! made by Miro Samek that you can find [here](https://youtube.com/playlist?list=PLPW8O6W-1chxym7TgIPV9k5E8YJtSBToI&si=mfiiiq3EMLj1bJpH)
 //!
-//! ## How to
+//! ## How to use the framework (see the code below)
 //! To build your own state machine, you first have to define the structure that will hold its
-//! data and then you will need to implement the following traits of the framework on it: the [`ProtoStateMachine`]
-//! trait and as many variant of the [`State<Tag>`] trait as you want to define states.
+//! data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
+//! trait and as many variants of the [`State<Tag>`] trait as you want to define states.
 //!
 //! The following sequence has to be followed in order to build an operational state machine.
 //! The builder pattern in used in order to enforce statically the steps order:
@@ -27,7 +29,14 @@
 //! it to transition to its first state. A [`StateMachine`] instance will be returned from this method, constituing the operational state machine.
 //! This structure only exposes the [`StateMachine::dispatch()`] method used for injecting events into it.
 //!
-//!```rust
+//! # Resources
+//! This library features many examples to help you understand how to use it. Some examples can be run
+//! directly on your computer. This includes examples provided with the different user-exposed
+//! functions but also the one below. Some other examples are designed to run on hardware. In that
+//! case the material you need and its setup are described in the example file. This includes
+//! examples in the `kaori_hsm/examples` directory.
+//!
+//!//!```rust
 //!# use std::sync::mpsc::channel;
 //!# use std::sync::mpsc::Receiver;
 //!# use std::sync::mpsc::Sender;
@@ -129,7 +138,7 @@
 //!#         TryRecvError::Disconnected => panic!("Disconnected"),
 //!#     })
 //!# }
-//!#
+//!# // Panics if the seies of events comming out of the state machine does not match to expectations
 //!# fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
 //!#     for (index, &expectation) in expectations.iter().enumerate() {
 //!#         let sm_output = collect_sm_output(receiver);
