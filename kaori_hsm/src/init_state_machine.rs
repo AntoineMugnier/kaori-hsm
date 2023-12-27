@@ -1,5 +1,5 @@
 use crate::proto_state_machine::ProtoStateMachine;
-use crate::{sm_business_logic, StateMachine};
+use crate::{sm_business_logic::SMBusinessLogic, StateMachine};
 
 //For doc
 #[allow(unused_imports)]
@@ -28,7 +28,7 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
         let init_result = self.user_state_machine.init();
 
         unsafe {
-            let curr_state_fn = sm_business_logic::init(
+            let curr_state_fn = <Self as SMBusinessLogic>::init(
                 core::mem::transmute(&mut self.user_state_machine),
                 core::mem::transmute(&init_result),
             );
@@ -39,4 +39,8 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
             }
         }
     }
+}
+
+impl <UserStateMachine: ProtoStateMachine>SMBusinessLogic for InitStateMachine<UserStateMachine>{
+
 }
