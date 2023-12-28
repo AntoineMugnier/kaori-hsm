@@ -1,5 +1,7 @@
 use crate::proto_state_machine::ProtoStateMachine;
 
+// These subsitute types are used when we want to get rid of the expoloding program size
+// induced by the user types which propagate in the original types. 
 pub(crate) mod denatured {
 
     pub struct OpaqueType {}

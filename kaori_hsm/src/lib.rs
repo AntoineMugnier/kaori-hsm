@@ -16,7 +16,7 @@
 //! For understanding how state machines and especially HSMs work, I especially recommend the video series
 //! made by Miro Samek that you can find [here](https://youtube.com/playlist?list=PLPW8O6W-1chxym7TgIPV9k5E8YJtSBToI&si=mfiiiq3EMLj1bJpH)
 //!
-//! ## How to use the framework (see the code below)
+//! ## How to use the library (see the code below)?
 //! To build your own state machine, you first have to define the structure that will hold its
 //! data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
 //! trait and as many variants of the [`State<Tag>`] trait as you want to define states.
@@ -30,11 +30,13 @@
 //! This structure only exposes the [`StateMachine::dispatch()`] method used for injecting events into it.
 //!
 //! # Resources
-//! This library features many examples to help you understand how to use it. Some examples can be run
-//! directly on your computer. This includes examples provided with the different user-exposed
-//! functions but also the one below. Some other examples are designed to run on hardware. In that
-//! case the material you need and its setup are described in the example file. This includes
-//! examples in the `kaori_hsm/examples` directory.
+//! This library features many examples that show you its potential and help you understand how to use it. All of them can be
+//! run on without any specific hardware. You will find small examples embedded in the library types and functions definitions composing this library.
+//! Thoses examples focus primarly on featuring the use case of those types and functions. Then there are more complex examples that you
+//! will find in the `kaori_hsm/examples` directory. Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples.
+//! Then you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test) a project designed to test the performance
+//! of this library on a stm32f103c8T6 microcontroller. The example may not be easy to understand for a newcomer to the library, but it is the most
+//! complete one.
 //!
 //!```rust
 //!# use std::sync::mpsc::channel;
@@ -60,7 +62,9 @@
 //!     fn post_string(&self, s : &str){
 //!         self.sender.send(String::from(s)).unwrap();
 //!     }
-//! } impl ProtoStateMachine for BasicStateMachine{
+//! }
+//!
+//! impl ProtoStateMachine for BasicStateMachine{
 //!   type Evt = BasicEvt;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
