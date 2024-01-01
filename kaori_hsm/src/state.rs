@@ -51,6 +51,7 @@ pub type StateFn<UserStateMachineT> = fn(
     &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>,
 ) -> CoreHandleResult<UserStateMachineT>;
 
+
 pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
     Ignored,
     Handled,

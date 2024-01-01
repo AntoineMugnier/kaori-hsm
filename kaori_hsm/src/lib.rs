@@ -1,10 +1,14 @@
 //! # kaori_hsm State machine library
 //! kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Lightweigness
 //! and execution speed are primary focuses of this library as it is designed to run on systems with
-//! low resources such as microcontrollers. However, this library is hardware-independent and you
-//! can run it on the support you like such as your computer.
+//! low resources such as microcontrollers. As being hardware-independent, the library can
+//! be run on any system for which there is a rust compiler available for it.
+//! Some of the key advantages of this library are:
+//! - No use of dynamic memory allocation
+//! - Fast execution, low stack and program memory usage
+//! - no use of rust standard library, neither of other external crate
 //!
-//!# What are Hierarchical state machines ?
+//!## What are Hierarchical state machines ?
 //! States machines are software entities processing events differently depending on the state in
 //! which they are. Different input events may lead to different actions being performed by the state
 //! machine and can trigger transition to other states. 
@@ -20,29 +24,27 @@
 //! To build your own state machine, you first have to define the structure that will hold its
 //! data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
 //! trait and as many variants of the [`State<Tag>`] trait as you want to define states.
+//! 
+//! The following sequence has to be followed in order to build an operational state machine:
+//! - Create an instance of the structure which will hold the data of your state machine.
+//! - Encapsulate an instance of this structure into an InitStateMachine instance using the [`InitStateMachine::from()`] function. 
+//! - Initialize the state machine by calling the [`InitStateMachine::init()`] method on this instance. It will initialize the state machine and lead
+//! it to its first state. A [`StateMachine`] instance will be returned from this method. This type represents a fully operational state machine
+//! and only exposes the [`StateMachine::dispatch()`] method used for injecting event variants into it.
 //!
-//! The following sequence has to be followed in order to build an operational state machine.
-//! The builder pattern in used in order to enforce statically the steps order:
-//! - Create an instance of the structure you previously defined.
-//! - Call the [`InitStateMachine::from()`] function with the instance as argument. A ['InitStateMachine'] instance will be returned.
-//! - Call the [`InitStateMachine::init()`] method on this instance. It will initialize the state machine and lead
-//! it to transition to its first state. A [`StateMachine`] instance will be returned from this method, constituing the operational state machine.
-//! This structure only exposes the [`StateMachine::dispatch()`] method used for injecting events into it.
-//!
-//! # Resources
+//! ## Examples
 //! This library features many examples that show you its potential and help you understand how to use it. All of them can be
-//! run on without any specific hardware. You will find small examples embedded in the library types and functions definitions composing this library.
+//! run without any specific hardware. You will find small examples embedded in the library types and functions definitions composing this library.
 //! Thoses examples focus primarly on featuring the use case of those types and functions. Then there are more complex examples that you
 //! will find in the `kaori_hsm/examples` directory. Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples.
 //! Then you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test) a project designed to test the performance
-//! of this library on a stm32f103c8T6 microcontroller. The example may not be easy to understand for a newcomer to the library, but it is the most
-//! complete one.
+//! of this library on a stm32f103c8T6 microcontroller. The performance test may not be easy to
+//! understand for a newcomer to the library, but it may be the most practical example.
 //!
-//!```rust
-//!# use std::sync::mpsc::channel;
-//!# use std::sync::mpsc::Receiver;
-//!# use std::sync::mpsc::Sender;
-//!# use std::sync::mpsc::TryRecvError;
+//! # Simple example
+//! ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_fm.png?raw=true)
+//! ```rust
+//! use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 //! use kaori_hsm::*;
 //! enum BasicEvt{
 //!     A,
@@ -85,15 +87,15 @@
 //!        self.post_string("S1-ENTRY");
 //!     }
 //!
+//!     fn exit(&mut self) {
+//!        self.post_string("S1-EXIT");
+//!     }
+//!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
 //!             BasicEvt::A => {
 //!                 self.post_string("S1-HANDLES-A");
 //!                 handled!()
-//!             }
-//!             BasicEvt::C =>{
-//!                 self.post_string("S1-HANDLES-C");
-//!                 transition!(S2)
 //!             }
 //!             _ => ignored!()
 //!         }
@@ -102,6 +104,10 @@
 //!  
 //! #[state(super_state= S1)]
 //! impl State<S11> for BasicStateMachine{
+//! 
+//!     fn entry(&mut self) {
+//!        self.post_string("S11-ENTRY");
+//!     }
 //!
 //!     fn exit(&mut self) {
 //!        self.post_string("S11-EXIT");
@@ -109,28 +115,27 @@
 //!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
-//!             BasicEvt::B => {
-//!                  self.post_string("S11-HANDLES-B");
-//!                  transition!(S2)
-//!             }
+//!         BasicEvt::B =>{
+//!             self.post_string("S11-HANDLES-B");
+//!             transition!(S12)
+//!         }
 //!             _ => ignored!()
 //!         }
 //!     }
 //! }
+//! #[state(super_state= S1)]
+//! impl State<S12> for BasicStateMachine{
 //!
-//!#[state(super_state= Top)]
-//! impl State<S2> for BasicStateMachine{
+//!     fn entry(&mut self) {
+//!        self.post_string("S12-ENTRY");
+//!     }
+//!
+//!     fn exit(&mut self) {
+//!        self.post_string("S12-EXIT");
+//!     }
 //!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
-//!            BasicEvt::A => {
-//!                 self.post_string("S2-HANDLES-A");
-//!                 transition!(S1)
-//!             }
-//!            BasicEvt::B => {
-//!                 self.post_string("S2-HANDLES-B");
-//!                 handled!()
-//!             }
 //!             _ => ignored!()
 //!         }
 //!     }
@@ -173,24 +178,32 @@
 //!    let ism = InitStateMachine::from(basic_state_machine);
 //!
 //!    let mut sm = ism.init();
-//!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT"]);
+//!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"]);
 //!    
 //!    sm.dispatch(&BasicEvt::A);
 //!    expect_output_series(&receiver, &["S1-HANDLES-A"]);
 //!    
 //!    sm.dispatch(&BasicEvt::B);
-//!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT"]);
-//!
-//!    sm.dispatch(&BasicEvt::B);
-//!    expect_output_series(&receiver, &["S2-HANDLES-B"]);
-//!
-//!    sm.dispatch(&BasicEvt::A);
-//!    expect_output_series(&receiver, &["S2-HANDLES-A", "S1-ENTRY", "S1-INIT"]);
-//!    
-//!    sm.dispatch(&BasicEvt::C);
-//!    expect_output_series(&receiver, &["S1-HANDLES-C", "S11-EXIT"]);
-//!
+//!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT", "S12-ENTRY"]);
 //!```
+//! ## Cargo commands index
+//! The present directory must be `kaori_hsm` to run every cargo command.
+//! ### Building the lib in release mode
+//! ```shell 
+//! cargo build --release
+//! ````
+//! ### Running doc test
+//! ```shell
+//! cargo test --doc
+//! ```
+//! ### Running a specific integration test
+//! ```shell
+//! cargo test --test [test_name]
+//! ```
+//! ### Running a specific example
+//! ```shell
+//! cargo run --example [example_name]
+//! ```
 
 #![no_std]
 mod init_state_machine;
