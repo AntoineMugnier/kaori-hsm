@@ -1,9 +1,6 @@
-pub use crate::state::{CoreHandleResult, HandleResult, InitResult, ParentState, State};
-pub use crate::StateMachine;
-
 //For doc
 #[allow(unused_imports)]
-use crate::InitStateMachine;
+use crate::{StateMachine, InitStateMachine,state::{CoreHandleResult, HandleResult, InitResult, ParentState, State}};
 
 /// Define the initial pseudostate and the type of event variant the state machine can receive
 /// # Example
