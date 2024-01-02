@@ -10,11 +10,11 @@ use syn::{parse::Parse, Ident, ItemImpl, Token};
 /// as the value of `super_state`.
 ///
 /// There are two use cases of the macro depending on the category of the parent state (see example
-/// below). 
+/// below).
 /// The first case being when the state has the top state as a parent. In this case, use the `Top`
 /// keyword to define the value of `super_state`.
-/// The second case being when the parent state is another user-defined state. In this case 
-/// set your custom state as the name of `super_state`. 
+/// The second case being when the parent state is another user-defined state. In this case
+/// set your custom state as the name of `super_state`.
 /// ```rust,ignore
 ///# enum BasicEvt{A};
 ///# struct BasicStateMachine{}
@@ -50,7 +50,7 @@ use syn::{parse::Parse, Ident, ItemImpl, Token};
 ///            }
 ///            _ => ignored!()
 ///        }
-///    } 
+///    }
 /// }
 /// ```
 

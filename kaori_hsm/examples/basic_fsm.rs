@@ -1,5 +1,5 @@
 use kaori_hsm::*;
-/// Example 
+/// Example
 // Evt definition
 enum BasicEvt {
     A,

@@ -1,5 +1,4 @@
 use kaori_hsm::*;
-// Evt definition
 
 use rand::Rng;
 #[derive(Debug)]
@@ -19,7 +18,6 @@ impl BasicStateMachine {
         BasicStateMachine { a: 0 }
     }
 }
-//type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
 impl ProtoStateMachine for BasicStateMachine {
     type Evt = BasicEvt;

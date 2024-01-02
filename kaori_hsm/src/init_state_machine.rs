@@ -41,6 +41,4 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
     }
 }
 
-impl <UserStateMachine: ProtoStateMachine>SMBusinessLogic for InitStateMachine<UserStateMachine>{
-
-}
+impl<UserStateMachine: ProtoStateMachine> SMBusinessLogic for InitStateMachine<UserStateMachine> {}

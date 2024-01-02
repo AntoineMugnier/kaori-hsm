@@ -4,7 +4,7 @@ use crate::proto_state_machine::ProtoStateMachine;
 use crate::state_machine::StateMachine;
 
 // These subsitute types are used to prevent exploding program size
-// induced by the user types which propagate in the original types. 
+// induced by the user types which propagate in the original types.
 pub(crate) mod denatured {
 
     pub struct OpaqueType {}
@@ -81,7 +81,7 @@ pub enum ParentState<UserStateMachine: ProtoStateMachine + ?Sized> {
 
 /// Returned by the [`ProtoStateMachine::init()`] and [`State::init()`] methods to indicate
 /// the target state of an intial transition. The method [`State::init()`] must remain undefined
-/// for every leaf state and in this case, the default implementation returns `NotImplemented`. 
+/// for every leaf state and in this case, the default implementation returns `NotImplemented`.
 pub enum InitResult<UserStateMachine: ProtoStateMachine + ?Sized> {
     NotImplemented,
     TargetState(StateFn<UserStateMachine>),
@@ -194,9 +194,9 @@ where
 
     /// Define the operations to perform when the initial transition of a state is triggered.
     /// Is called when a transition targets the present state, after its entry statement has been executed.
-    /// 
+    ///
     ///# Implementation policy
-    /// Leaving the default implementation is mandatory for all leaf states (states without children) but 
+    /// Leaving the default implementation is mandatory for all leaf states (states without children) but
     /// all non-leaf state must implement this method.
     /// The implemented method must return only `TargetState::InitResult` variant containing the target substate.  
     /// *Note: It is recommended to use the `ìnit_transition!()` macro for returning the target
@@ -226,7 +226,7 @@ where
     ///  
     /// # Implementation policy
     /// No default implementation, must be implemented for every state.
-    /// This method implementation is typically a `match` statement on the event variant. 
+    /// This method implementation is typically a `match` statement on the event variant.
     /// The handling of each event may return either:
     /// - [`HandleResult::Transition`]: Immediately trigger a transition to the target state, which may
     /// become the next current state of the state machine.
