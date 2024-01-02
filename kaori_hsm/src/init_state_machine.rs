@@ -5,9 +5,9 @@ use crate::{sm_business_logic::SMBusinessLogic, StateMachine};
 #[allow(unused_imports)]
 use crate::state::State;
 
-/// Represents a precursor to a state machine, waiting to be initialized.
+/// Represent a precursor to a state machine, waiting to be initialized.
 /// Built using [`InitStateMachine::from()`] from an instance of a  user-defined structure
-/// on which has been implemented the `ProtoStateMachine` and `State` traits.
+/// on which has been implemented the [`ProtoStateMachine`] and [`State`] traits.
 pub struct InitStateMachine<UserStateMachine: ProtoStateMachine> {
     user_state_machine: UserStateMachine,
 }

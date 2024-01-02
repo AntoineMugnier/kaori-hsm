@@ -3,7 +3,7 @@ use crate::proto_state_machine::ProtoStateMachine;
 #[allow(unused_imports)]
 use crate::state_machine::StateMachine;
 
-// These subsitute types are used when we want to get rid of the expoloding program size
+// These subsitute types are used to prevent exploding program size
 // induced by the user types which propagate in the original types. 
 pub(crate) mod denatured {
 
@@ -79,8 +79,9 @@ pub enum ParentState<UserStateMachine: ProtoStateMachine + ?Sized> {
     Exists(StateFn<UserStateMachine>),
 }
 
-/// Returned by the [`State::init()`] method for which the user may override the default 
-/// implementation in order to create an initial transition to a specific target state.
+/// Returned by the [`ProtoStateMachine::init()`] and [`State::init()`] methods to indicate
+/// the target state of an intial transition. The method [`State::init()`] must remain undefined
+/// for every leaf state and in this case, the default implementation returns `NotImplemented`. 
 pub enum InitResult<UserStateMachine: ProtoStateMachine + ?Sized> {
     NotImplemented,
     TargetState(StateFn<UserStateMachine>),
@@ -191,7 +192,7 @@ where
     /// *Note: This method is automatically implemented if you use the `#[state()]` procedural macro*
     fn get_parent_state() -> ParentState<Self>;
 
-    /// Defines the operations to perform when the initial transition of a state is triggered.
+    /// Define the operations to perform when the initial transition of a state is triggered.
     /// Is called when a transition targets the present state, after its entry statement has been executed.
     /// 
     ///# Implementation policy
@@ -206,7 +207,7 @@ where
 
     /// Executed when the state machine enters the present state during a transition.
     ///# Implementation policy
-    /// The implementation of this method is optional
+    /// The implementation of this method is optional.
     ///
     fn entry(&mut self) {
         // No implementation
@@ -215,7 +216,7 @@ where
     /// Executed when the state machine exits the present state during a transition.
     ///
     ///# Implementation policy
-    /// The implementation of this method is optional
+    /// The implementation of this method is optional.
     fn exit(&mut self) {
         // No implementation
     }
@@ -231,7 +232,7 @@ where
     /// become the next current state of the state machine.
     /// - [`HandleResult::Handled`]: The event is handled without transition.
     /// - [`HandleResult::Ignored`]: the event is dispatched to the parent state.  
-    /// *Note: Its is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead
+    /// *Note: It is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead
     /// of assembling manually the enum variants of `HandleResult`*
     fn handle(&mut self, evt: &<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
 

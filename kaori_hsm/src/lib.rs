@@ -32,16 +32,20 @@
 //! it to its first state. A [`StateMachine`] instance will be returned from this method. This type represents a fully operational state machine
 //! and only exposes the [`StateMachine::dispatch()`] method used for injecting event variants into it.
 //!
-//! ## Examples
-//! This library features many examples that show you its potential and help you understand how to use it. All of them can be
-//! run without any specific hardware. You will find small examples embedded in the library types and functions definitions composing this library.
-//! Thoses examples focus primarly on featuring the use case of those types and functions. Then there are more complex examples that you
-//! will find in the `kaori_hsm/examples` directory. Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples.
-//! Then you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test) a project designed to test the performance
-//! of this library on a stm32f103c8T6 microcontroller. The performance test may not be easy to
-//! understand for a newcomer to the library, but it may be the most practical example.
+//! ## Examples across project
+//! This library features many examples that show you its potential and help you understand how to use it. Most of them can be
+//! run without any specific hardware.  
+//! You will find small examples embedded in the library types and functions definitions composing this library. Those examples
+//! focus primarily on featuring the use case of those types and functions.  
+//! Then there are more complex examples that you will find in the `kaori_hsm/examples` directory.
+//! Those ones are eay to play with and a make a good base for making your own state machines.
+//! Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples,
+//! but are very rigid and contains a lot of test-specific code.
+//! Finally you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test)
+//! a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
+//! The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 //!
-//! # Simple example
+//! ### A simple hierachical state machine
 //! ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_fm.png?raw=true)
 //! ```rust
 //! use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
