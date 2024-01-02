@@ -10,15 +10,15 @@ use syn::{parse::Parse, Ident, ItemImpl, Token};
 /// - Implement the `State::get_parent_state()` method using the state tag of the parent provided
 /// as the value of `super_state`.
 ///
-/// There are two cases of use of the macro depending on the category of the parent state. 
+/// There are two use cases of the macro depending on the category of the parent state. 
 /// The first case being when the state has the top state as a parent.
 /// In this case, use the `Top` keyword to define the value of `super_state`:
-/// ```
+/// ```rust,ignore
 /// #[state(super_state= Top)]
 /// impl State<S1> for BasicStateMachine {...}
-/// ```
+/// ```rust,ignore
 /// The second case being when the parent state is another user-defined state. In this case 
-/// set `your custom state as the name of `super_state`. 
+/// set your custom state as the name of `super_state`. 
 /// ```
 /// #[state(super_state= S1)]
 /// impl State<S11> for BasicStateMachine {...}
@@ -132,7 +132,7 @@ mod test {
 
         let attr_tokens = TokenStream::from_str(attr).unwrap();
         let item_tokens = TokenStream::from_str(item).unwrap();
-        let expected_str = "struct StateName { } impl kaori_hsm :: State < StateName > for UserStateMachine { fn get_parent_state () -> ParentState < Self > { ParentState :: TopReached } }";
+        let expected_str = "struct StateName { } impl kaori_hsm :: State < StateName > for UserStateMachine { fn get_parent_state () -> kaori_hsm :: ParentState < Self > { kaori_hsm :: ParentState :: TopReached } }";
         let res = crate::state_impl(attr_tokens, item_tokens);
         assert_eq!(expected_str, res.to_string());
     }
