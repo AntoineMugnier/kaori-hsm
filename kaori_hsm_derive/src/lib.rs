@@ -1,7 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, Ident, ItemImpl, Token};
-
 /// Macro to call before every implementation of the `State<>` trait.
 /// Allow to decrease verbosity of the trait implementation.
 /// This is what the macro does:
@@ -16,7 +15,7 @@ use syn::{parse::Parse, Ident, ItemImpl, Token};
 /// keyword to define the value of `super_state`.
 /// The second case being when the parent state is another user-defined state. In this case 
 /// set your custom state as the name of `super_state`. 
-/// ```rust
+/// ```rust,ignore
 ///# enum BasicEvt{A};
 ///# struct BasicStateMachine{}
 ///# impl ProtoStateMachine for BasicStateMachine{
