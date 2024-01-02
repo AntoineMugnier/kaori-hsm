@@ -45,7 +45,12 @@
 //! a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
 //! The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 //!
-//! ### A simple hierachical state machine
+//! ### A relatively simple hierachical state machine example
+//! The following example shows the transcription of the HSM below into code using the Kaori_hsm
+//! library. The test uses a queue onto which the HSM posts a specific string every time it
+//! takes a specific action. After initializing the HSM or dispatching an event to it, the test 
+//! checks that the series of strings on the queue matches the expectation.
+//! 
 //! ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_fm.png?raw=true)
 //! ```rust
 //! use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
@@ -65,6 +70,7 @@
 //!        BasicStateMachine { sender }
 //!    }
 //!
+//!     // Post a string to the test queue
 //!     fn post_string(&self, s : &str){
 //!         self.sender.send(String::from(s)).unwrap();
 //!     }
@@ -151,8 +157,9 @@
 //!#         TryRecvError::Disconnected => panic!("Disconnected"),
 //!#     })
 //!# }
+//!
 //!# // Panics if the seies of events comming out of the state machine does not match to expectations
-//!# fn expect_output_series(receiver:  &Receiver<String>, expectations: &[&str]) {
+//!# fn assert_eq_sm_output(receiver:  &Receiver<String>, expectations: &[&str]) {
 //!#     for (index, &expectation) in expectations.iter().enumerate() {
 //!#         let sm_output = collect_sm_output(receiver);
 //!#         if expectation != sm_output {
@@ -180,15 +187,19 @@
 //!    let basic_state_machine = BasicStateMachine::new(sender);
 //!
 //!    let ism = InitStateMachine::from(basic_state_machine);
-//!
+//!    
+//!    //Execute the topmost initial transition of the state machine, leading to S11 state
 //!    let mut sm = ism.init();
-//!    expect_output_series(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"]);
-//!    
+//!    assert_eq_sm_output(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"]);
+//!     
+//!     // Dispatch event A to the HSM in S11 state. Event is ignored in S11 and handled by the 
+//!     // parent state S1.
 //!    sm.dispatch(&BasicEvt::A);
-//!    expect_output_series(&receiver, &["S1-HANDLES-A"]);
+//!    assert_eq_sm_output(&receiver, &["S1-HANDLES-A"]);
 //!    
+//!    // Dispatch event B to the HSM in S11 state, provoking a transition to S12 state
 //!    sm.dispatch(&BasicEvt::B);
-//!    expect_output_series(&receiver, &["S11-HANDLES-B", "S11-EXIT", "S12-ENTRY"]);
+//!    assert_eq_sm_output(&receiver, &["S11-HANDLES-B", "S11-EXIT", "S12-ENTRY"]);
 //!```
 //! ## Cargo commands index
 //! The present directory must be `kaori_hsm` to run every cargo command.
