@@ -1,6 +1,6 @@
 # kaori_hsm
 
-## kaori_hsm state machine library
+## kaori_hsm State machine library
 kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Lightweigness
 and execution speed are primary focuses of this library as it is designed to run on systems with
 low resources such as microcontrollers. As being hardware-independent, the library can
@@ -13,7 +13,7 @@ Some of the key advantages of this library are:
 ### What are Hierarchical state machines ?
 States machines are software entities processing events differently depending on the state in
 which they are. Different input events may lead to different actions being performed by the state
-machine and can trigger transition to other states.
+machine and can trigger transitions to other states.
 
 Hierarchical State Machines are state machines which can have nested states. This means that if
 an event cannot be handled in a state, its super state could eventually handle it.
@@ -22,7 +22,7 @@ HSMs are therefore particularly useful for designing state machines with complex
 For understanding how state machines and especially HSMs work, I especially recommend the video series
 made by Miro Samek that you can find [here](https://youtube.com/playlist?list=PLPW8O6W-1chxym7TgIPV9k5E8YJtSBToI&si=mfiiiq3EMLj1bJpH)
 
-### How to use the library (see the code below)?
+### How to use the library ?
 To build your own state machine, you first have to define the structure that will hold its
 data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
 trait and as many variants of the [`State<Tag>`] trait as you want to define states.
@@ -34,7 +34,7 @@ The following sequence has to be followed in order to build an operational state
 it to its first state. A [`StateMachine`] instance will be returned from this method. This type represents a fully operational state machine
 and only exposes the [`StateMachine::dispatch()`] method used for injecting event variants into it.
 
-### Examples across project
+### Examples across the  project
 This library features many examples that show you its potential and help you understand how to use it. Most of them can be
 run without any specific hardware.
 You will find small examples embedded in the library types and functions definitions composing this library. Those examples
@@ -47,7 +47,7 @@ Finally you will find on [this repository](https://github.com/AntoineMugnier/kao
 a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
 The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 
-### Introductory example
+#### A relatively simple hierachical state machine example
 The following example shows the transcription of the HSM below into code using the Kaori_hsm
 library. The test uses a queue onto which the HSM posts a specific string every time it
 takes a specific action. After initializing the HSM or dispatching an event to it, the test
@@ -154,6 +154,7 @@ impl State<S12> for BasicStateMachine{
 }
 
 
+#
 
    let (sender, mut receiver) = channel();
 
@@ -161,7 +162,7 @@ impl State<S12> for BasicStateMachine{
 
    let ism = InitStateMachine::from(basic_state_machine);
 
-   //Execute the topmost initial transition of the state machine, leading to S11 state
+   // Execute the topmost initial transition of the state machine, leading to S11 state
    let mut sm = ism.init();
    assert_eq_sm_output(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"]);
 
@@ -175,7 +176,7 @@ impl State<S12> for BasicStateMachine{
    assert_eq_sm_output(&receiver, &["S11-HANDLES-B", "S11-EXIT", "S12-ENTRY"]);
 ```
 ### Cargo commands index
-The present directory must be `kaori_hsm` to run every cargo command.
+The present directory must be `kaori_hsm/kaori_hsm` to run every cargo command.
 #### Building the lib in release mode
 ```shell
 cargo build --release
