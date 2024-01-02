@@ -38,14 +38,14 @@
 //! You will find small examples embedded in the library types and functions definitions composing this library. Those examples
 //! focus primarily on featuring the use case of those types and functions.  
 //! Then there are more complex examples that you will find in the `kaori_hsm/examples` directory.
-//! Those ones are eay to play with and a make a good base for making your own state machines.
+//! Those are easy to play with and a make a good base for making your own state machines.
 //! Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples,
-//! but are very rigid and contains a lot of test-specific code.
+//! but are very rigid and contain a lot of test-specific code.
 //! Finally you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test)
 //! a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
 //! The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 //!
-//! ### A relatively simple hierachical state machine example
+//! ## A relatively simple hierachical state machine example
 //! The following example shows the transcription of the HSM below into code using the Kaori_hsm
 //! library. The test uses a queue onto which the HSM posts a specific string every time it
 //! takes a specific action. After initializing the HSM or dispatching an event to it, the test
