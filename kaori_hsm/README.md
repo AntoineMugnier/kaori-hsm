@@ -1,6 +1,6 @@
 # kaori_hsm
 
-## kaori_hsm State machine library
+## kaori_hsm state machine library
 kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Lightweigness
 and execution speed are primary focuses of this library as it is designed to run on systems with
 low resources such as microcontrollers. As being hardware-independent, the library can
@@ -8,9 +8,8 @@ be run on any system for which there is a rust compiler available for it.
 Some of the key advantages of this library are:
 - No use of dynamic memory allocation
 - Fast execution, low stack and program memory usage
-- no use of rust standard library, neither of other external crate
-
-### What are Hierarchical state machines ?
+- no use of rust standard library, nor any other external crate
+### What are hierarchical state machines ?
 States machines are software entities processing events differently depending on the state in
 which they are. Different input events may lead to different actions being performed by the state
 machine and can trigger transitions to other states.
@@ -40,18 +39,18 @@ run without any specific hardware.
 You will find small examples embedded in the library types and functions definitions composing this library. Those examples
 focus primarily on featuring the use case of those types and functions.
 Then there are more complex examples that you will find in the `kaori_hsm/examples` directory.
-Those ones are eay to play with and a make a good base for making your own state machines.
+Those are easy to play with and a make a good base for making your own state machines.
 Integrations tests in the `kaori_hsm/tests` directory can also serve the purpose of examples,
-but are very rigid and contains a lot of test-specific code.
+but are very rigid and contain a lot of test-specific code.
 Finally you will find on [this repository](https://github.com/AntoineMugnier/kaori-hsm-perf-test)
 a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
 The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 
-#### A relatively simple hierachical state machine example
-The following example shows the transcription of the HSM below into code using the Kaori_hsm
+### An introductory hierachical state machine example
+The following example shows the transcription of the HSM below into code using the `kaori_hsm`
 library. The test uses a queue onto which the HSM posts a specific string every time it
 takes a specific action. After initializing the HSM or dispatching an event to it, the test
-checks that the series of strings on the queue matches the expectation.
+code checks that the series of strings on the queue matches the expectation.
 
 ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_fm.png?raw=true)
 ```rust
@@ -189,7 +188,7 @@ cargo test --doc
 ```shell
 cargo test --test [test_name]
 ```
-#### Running a specific example
+#### Running a specific example from the `examples` directory
 ```shell
 cargo run --example [example_name]
 ```
