@@ -1,10 +1,10 @@
 # kaori_hsm
 
 ## kaori_hsm state machine library
-kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Lightweigness
-and execution speed are primary focuses of this library as it is designed to run on systems with
-low resources such as microcontrollers. As being hardware-independent, the library can
-be run on any system for which there is a rust compiler available for it.
+kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Low memory
+footprint and execution speed are primary focuses of this library as it is designed to
+run on systems with low resources such as microcontrollers. As being hardware-independent,
+the library can be run on any system for which there is a rust compiler available for it.
 Some of the key advantages of this library are:
 - No use of dynamic memory allocation
 - Fast execution, low stack and program memory usage
