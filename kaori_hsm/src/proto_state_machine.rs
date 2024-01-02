@@ -7,7 +7,7 @@ use crate::{StateMachine, InitStateMachine,state::{CoreHandleResult, HandleResul
 ///```rust
 ///# use kaori_hsm::*;
 /// enum BasicEvt{
-/// A{counter: u8},
+/// A,
 /// B,
 /// C
 /// }
@@ -20,8 +20,8 @@ use crate::{StateMachine, InitStateMachine,state::{CoreHandleResult, HandleResul
 ///#
 ///#     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///#         match evt{
-///#             BasicEvt::A{counter} => {
-///#               println!("counter: {}", counter);
+///#             BasicEvt::A => {
+///#               println!("S0-HANDLES-A");
 ///#               handled!()
 ///#             },
 ///#             _ => ignored!()
