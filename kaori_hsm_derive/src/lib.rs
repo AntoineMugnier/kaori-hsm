@@ -2,6 +2,28 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, Ident, ItemImpl, Token};
 
+/// Macro to call before every implementation of the `State<>` trait.
+/// Allow to decrease verbosity of the trait implementation.
+/// This is what the macro does:
+/// - Create an empty structure named after the tag sent as a generic parameter
+/// in the `State<>` trait implementation
+/// - Implement the `State::get_parent_state()` method using the state tag of the parent provided
+/// as the value of `super_state`.
+///
+/// There are two cases of use of the macro depending on the category of the parent state. 
+/// The first case being when the state has the top state as a parent.
+/// In this case, use the `Top` keyword to define the value of `super_state`:
+/// ```
+/// #[state(super_state= Top)]
+/// impl State<S1> for BasicStateMachine {...}
+/// ```
+/// The second case being when the parent state is another user-defined state. In this case 
+/// set `your custom state as the name of `super_state`. 
+/// ```
+/// #[state(super_state= S1)]
+/// impl State<S11> for BasicStateMachine {...}
+/// ```
+
 #[proc_macro_attribute]
 pub fn state(
     args: proc_macro::TokenStream,
