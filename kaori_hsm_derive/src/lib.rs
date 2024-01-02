@@ -10,18 +10,49 @@ use syn::{parse::Parse, Ident, ItemImpl, Token};
 /// - Implement the `State::get_parent_state()` method using the state tag of the parent provided
 /// as the value of `super_state`.
 ///
-/// There are two use cases of the macro depending on the category of the parent state. 
-/// The first case being when the state has the top state as a parent.
-/// In this case, use the `Top` keyword to define the value of `super_state`:
-/// ```rust,ignore
-/// #[state(super_state= Top)]
-/// impl State<S1> for BasicStateMachine {...}
-/// ```rust,ignore
+/// There are two use cases of the macro depending on the category of the parent state (see example
+/// below). 
+/// The first case being when the state has the top state as a parent. In this case, use the `Top`
+/// keyword to define the value of `super_state`.
 /// The second case being when the parent state is another user-defined state. In this case 
 /// set your custom state as the name of `super_state`. 
-/// ```
+/// ```rust
+///# enum BasicEvt{A};
+///# struct BasicStateMachine{}
+///# impl ProtoStateMachine for BasicStateMachine{
+///#     type Evt = BasicEvt;
+///#
+///#     fn init(&mut self) -> InitResult<Self> {
+///#         init_transition!(S1)
+///#     }
+///# }
+///
+/// #[state(super_state= Top)]
+/// impl State<S1> for BasicStateMachine {
+///     fn init(&mut self) -> InitResult<Self> {
+///         init_transition!(S11)
+///     }
+///
+///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+///        match evt{
+///            BasicEvt::A => {
+///                handled!()
+///            }
+///            _ => ignored!()
+///        }
+///    }    
+/// }
 /// #[state(super_state= S1)]
-/// impl State<S11> for BasicStateMachine {...}
+/// impl State<S11> for BasicStateMachine {
+///     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+///        match evt{
+///            BasicEvt::A => {
+///                transition!(S1)
+///            }
+///            _ => ignored!()
+///        }
+///    } 
+/// }
 /// ```
 
 #[proc_macro_attribute]
