@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Antoine Mugnier <amugnier@europe.com>"]
 repository= "https://github.com/AntoineMugnier/kaori-hsm"
-homepage="https://github.com/AntoineMugnier/kaori-hsm"
 documentation = "https://docs.rs/kaori-hsm"
 categories = ['embedded', "no-std"]
 description = "A performant hierarchical state machine library"
@@ -13,7 +12,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies]
-kaori_hsm_derive= {path = "../kaori_hsm_derive/"}
+kaori-hsm-derive= {path = "../kaori_hsm_derive/"}
 
 [dev-dependencies]
 rand = "0.8.5"

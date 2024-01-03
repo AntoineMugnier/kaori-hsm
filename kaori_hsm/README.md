@@ -1,4 +1,4 @@
-# kaori_hsm
+# kaori-hsm
 
 ## kaori_hsm state machine library
 kaori_hsm is a library for developing Hierarchical State Machines (HSMs) in Rust. Low memory
@@ -153,8 +153,6 @@ impl State<S12> for BasicStateMachine{
 }
 
 
-#
-
    let (sender, mut receiver) = channel();
 
    let basic_state_machine = BasicStateMachine::new(sender);
@@ -192,3 +190,5 @@ cargo test --test [test_name]
 ```shell
 cargo run --example [example_name]
 ```
+
+License: MIT OR Apache-2.0

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Antoine Mugnier <amugnier@europe.com>"]
 repository= "https://github.com/AntoineMugnier/kaori-hsm"
-homepage="https://github.com/AntoineMugnier/kaori-hsm"
 documentation = "https://docs.rs/kaori-hsm-derive"
 categories = ['embedded', "no-std"]
 description = "Macros for the kaori-hsm crate"
