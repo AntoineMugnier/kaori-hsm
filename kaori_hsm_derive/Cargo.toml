@@ -7,7 +7,7 @@ quote="*"
 proc-macro2 = "*"
 [package]
 name = "kaori_hsm_derive"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
