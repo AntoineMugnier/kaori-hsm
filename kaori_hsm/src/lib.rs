@@ -57,7 +57,7 @@
 //! ```rust
 //! use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 //! use kaori_hsm::*;
-//! enum BasicEvt{
+//! enum BlinkingEvent{
 //!     ButtonPressed,
 //!     ButtonReleased,
 //!     TimerTick,
@@ -79,7 +79,7 @@
 //! }
 //!
 //! impl ProtoStateMachine for BasicStateMachine{
-//!   type Evt = BasicEvt;
+//!   type Evt = BlinkingEvent;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
 //!       self.post_string("Starting HSM");
@@ -90,9 +90,9 @@
 //! #[state(super_state= Top)]
 //! impl State<BlinkingDisabled> for BasicStateMachine{
 //!
-//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!     fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
 //!         match evt{
-//!             BasicEvt::ButtonPressed => {
+//!             BlinkingEvent::ButtonPressed => {
 //!                 self.post_string("Button pressed");
 //!                 transition!(BlinkingEnabled)
 //!             }
@@ -115,9 +115,9 @@
 //!         init_transition!(LedOn)
 //!     }
 //!
-//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!     fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
 //!         match evt{
-//!             BasicEvt::ButtonReleased => {
+//!             BlinkingEvent::ButtonReleased => {
 //!                 self.post_string("Button released");
 //!                 transition!(BlinkingDisabled)
 //!             }
@@ -137,9 +137,9 @@
 //!        self.post_string("Led turned off");
 //!     }
 //!
-//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!     fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
 //!         match evt{
-//!         BasicEvt::TimerTick =>{
+//!         BlinkingEvent::TimerTick =>{
 //!             self.post_string("Timer tick");
 //!             transition!(LedOff)
 //!         }
@@ -151,9 +151,9 @@
 //! #[state(super_state= BlinkingEnabled)]
 //! impl State<LedOff> for BasicStateMachine{
 //!
-//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!     fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
 //!         match evt{
-//!         BasicEvt::TimerTick =>{
+//!         BlinkingEvent::TimerTick =>{
 //!             self.post_string("Timer tick");
 //!             transition!(LedOn)
 //!         }
@@ -205,19 +205,19 @@
 //!    assert_eq_sm_output(&receiver, &["Starting HSM"]);
 //!     
 //!    // Event ButtonReleased is ignored in this state
-//!    sm.dispatch(&BasicEvt::ButtonReleased);
+//!    sm.dispatch(&BlinkingEvent::ButtonReleased);
 //!    assert_eq_sm_output(&receiver, &[]);
 //!    
-//!    sm.dispatch(&BasicEvt::ButtonPressed);
+//!    sm.dispatch(&BlinkingEvent::ButtonPressed);
 //!    assert_eq_sm_output(&receiver, &["Button pressed", "Arm timer","Led turned on"]);
 //! 
-//!    sm.dispatch(&BasicEvt::TimerTick);
+//!    sm.dispatch(&BlinkingEvent::TimerTick);
 //!    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned off"]);
 //!
-//!    sm.dispatch(&BasicEvt::TimerTick);
+//!    sm.dispatch(&BlinkingEvent::TimerTick);
 //!    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned on"]);
 //!
-//!    sm.dispatch(&BasicEvt::ButtonReleased);
+//!    sm.dispatch(&BlinkingEvent::ButtonReleased);
 //!    assert_eq_sm_output(&receiver, &["Button released","Led turned off", "Disarm timer"]);
 //!```
 //! ## Cargo commands index

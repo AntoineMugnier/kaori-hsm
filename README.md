@@ -46,17 +46,20 @@ Finally you will find on [this repository](https://github.com/AntoineMugnier/kao
 a project designed to test the performance of this library on a stm32f103c8T6 microcontroller.
 The performance test may not be easy to understand for a newcomer to the library, but it may be the most practical example.
 
-### An introductory hierachical state machine example
-The following example shows the transcription of the HSM below into code using the `kaori_hsm`
-library. The test uses a queue onto which the HSM posts a specific string every time it
-takes a specific action. After initializing the HSM or dispatching an event to it, the test
-code checks that the series of strings on the queue matches the expectation.
+### An introductory hierarchical state machine example
+The following example features an hypothetical state machine written using the `kaori_hsm` library. This HSM simulates the blinking
+of a led depending on the change of the state of a button. When the state machine boots up, the led is
+off. At the time the button is pressed, the led starts blinking. When the button is released, the led
+stop blinking.
+This example is associated with a testing code. The test uses a queue onto which the HSM posts a
+specific string every time it takes a specific action. After initializing the HSM or dispatching
+an event to it, the test code checks that the series of strings on the queue matches the expectation.
 
 ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_sm.png?raw=true)
 ```rust
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use kaori_hsm::*;
-enum BasicEvt{
+enum BlinkingEvent{
     ButtonPressed,
     ButtonReleased,
     TimerTick,
@@ -78,7 +81,7 @@ impl BasicStateMachine{
 }
 
 impl ProtoStateMachine for BasicStateMachine{
-  type Evt = BasicEvt;
+  type Evt = BlinkingEvent;
 
   fn init(&mut self) -> InitResult<Self> {
       self.post_string("Starting HSM");
@@ -89,9 +92,9 @@ impl ProtoStateMachine for BasicStateMachine{
 #[state(super_state= Top)]
 impl State<BlinkingDisabled> for BasicStateMachine{
 
-    fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+    fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
         match evt{
-            BasicEvt::ButtonPressed => {
+            BlinkingEvent::ButtonPressed => {
                 self.post_string("Button pressed");
                 transition!(BlinkingEnabled)
             }
@@ -114,9 +117,9 @@ impl State<BlinkingEnabled> for BasicStateMachine{
         init_transition!(LedOn)
     }
 
-    fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+    fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
         match evt{
-            BasicEvt::ButtonReleased => {
+            BlinkingEvent::ButtonReleased => {
                 self.post_string("Button released");
                 transition!(BlinkingDisabled)
             }
@@ -136,9 +139,9 @@ impl State<LedOn> for BasicStateMachine{
        self.post_string("Led turned off");
     }
 
-    fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+    fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
         match evt{
-        BasicEvt::TimerTick =>{
+        BlinkingEvent::TimerTick =>{
             self.post_string("Timer tick");
             transition!(LedOff)
         }
@@ -150,9 +153,9 @@ impl State<LedOn> for BasicStateMachine{
 #[state(super_state= BlinkingEnabled)]
 impl State<LedOff> for BasicStateMachine{
 
-    fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+    fn handle(&mut self, evt: & BlinkingEvent) -> HandleResult<Self> {
         match evt{
-        BasicEvt::TimerTick =>{
+        BlinkingEvent::TimerTick =>{
             self.post_string("Timer tick");
             transition!(LedOn)
         }
@@ -170,20 +173,25 @@ impl State<LedOff> for BasicStateMachine{
 
    let ism = InitStateMachine::from(basic_state_machine);
 
-   // Execute the topmost initial transition of the state machine, leading to S11 state
+   // Execute the topmost initial transition of the state machine, leading to BlinkingDisabled
+   // state
    let mut sm = ism.init();
    assert_eq_sm_output(&receiver, &["Starting HSM"]);
 
-   sm.dispatch(&BasicEvt::ButtonPressed);
+   // Event ButtonReleased is ignored in this state
+   sm.dispatch(&BlinkingEvent::ButtonReleased);
+   assert_eq_sm_output(&receiver, &[]);
+
+   sm.dispatch(&BlinkingEvent::ButtonPressed);
    assert_eq_sm_output(&receiver, &["Button pressed", "Arm timer","Led turned on"]);
 
-   sm.dispatch(&BasicEvt::TimerTick);
+   sm.dispatch(&BlinkingEvent::TimerTick);
    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned off"]);
 
-   sm.dispatch(&BasicEvt::TimerTick);
+   sm.dispatch(&BlinkingEvent::TimerTick);
    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned on"]);
 
-   sm.dispatch(&BasicEvt::ButtonReleased);
+   sm.dispatch(&BlinkingEvent::ButtonReleased);
    assert_eq_sm_output(&receiver, &["Button released","Led turned off", "Disarm timer"]);
 ```
 ### Cargo commands index
