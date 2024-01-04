@@ -50,14 +50,14 @@
 //! takes a specific action. After initializing the HSM or dispatching an event to it, the test
 //! code checks that the series of strings on the queue matches the expectation.
 //!
-//! ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_fm.png?raw=true)
+//! ![intro_hsm](https://github.com/AntoineMugnier/kaori-hsm/blob/assets/intro_sm.png?raw=true)
 //! ```rust
 //! use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 //! use kaori_hsm::*;
 //! enum BasicEvt{
-//!     A,
-//!     B,
-//!     C
+//!     ButtonPressed,
+//!     ButtonReleased,
+//!     TimerTick,
 //! }
 //!
 //! struct BasicStateMachine{
@@ -79,72 +79,81 @@
 //!   type Evt = BasicEvt;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
-//!       self.post_string("TOP_INIT");
-//!       init_transition!(S1)
+//!       self.post_string("Starting HSM");
+//!       init_transition!(BlinkingDisabled)
 //!   }
-//! }
+//!}
 //!
 //! #[state(super_state= Top)]
-//! impl State<S1> for BasicStateMachine{
+//! impl State<BlinkingDisabled> for BasicStateMachine{
 //!
-//!     fn init(&mut self) -> InitResult<Self> {
-//!         self.post_string("S1-INIT");
-//!         init_transition!(S11)
+//!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
+//!         match evt{
+//!             BasicEvt::ButtonPressed => {
+//!                 self.post_string("Button pressed");
+//!                 transition!(BlinkingEnabled)
+//!             }
+//!             _ => ignored!()
+//!         }
 //!     }
+//! } 
+//! #[state(super_state= Top)]
+//! impl State<BlinkingEnabled> for BasicStateMachine{
 //!
 //!     fn entry(&mut self) {
-//!        self.post_string("S1-ENTRY");
+//!        self.post_string("Arm timer");
 //!     }
 //!
 //!     fn exit(&mut self) {
-//!        self.post_string("S1-EXIT");
+//!        self.post_string("Disarm timer");
+//!     }
+//!
+//!     fn init(&mut self) -> InitResult<Self>{
+//!         init_transition!(LedOn)
 //!     }
 //!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
-//!             BasicEvt::A => {
-//!                 self.post_string("S1-HANDLES-A");
-//!                 handled!()
+//!             BasicEvt::ButtonReleased => {
+//!                 self.post_string("Button released");
+//!                 transition!(BlinkingDisabled)
 //!             }
 //!             _ => ignored!()
 //!         }
 //!     }
 //! }    
 //!  
-//! #[state(super_state= S1)]
-//! impl State<S11> for BasicStateMachine{
+//! #[state(super_state= BlinkingEnabled)]
+//! impl State<LedOn> for BasicStateMachine{
 //!
 //!     fn entry(&mut self) {
-//!        self.post_string("S11-ENTRY");
+//!        self.post_string("Led turned on");
 //!     }
 //!
 //!     fn exit(&mut self) {
-//!        self.post_string("S11-EXIT");
+//!        self.post_string("Led turned off");
 //!     }
 //!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
-//!         BasicEvt::B =>{
-//!             self.post_string("S11-HANDLES-B");
-//!             transition!(S12)
+//!         BasicEvt::TimerTick =>{
+//!             self.post_string("Timer tick");
+//!             transition!(LedOff)
 //!         }
 //!             _ => ignored!()
 //!         }
 //!     }
 //! }
-//! #[state(super_state= S1)]
-//! impl State<S12> for BasicStateMachine{
 //!
-//!     fn entry(&mut self) {
-//!        self.post_string("S12-ENTRY");
-//!     }
-//!
-//!     fn exit(&mut self) {
-//!        self.post_string("S12-EXIT");
-//!     }
+//! #[state(super_state= BlinkingEnabled)]
+//! impl State<LedOff> for BasicStateMachine{
 //!
 //!     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 //!         match evt{
+//!         BasicEvt::TimerTick =>{
+//!             self.post_string("Timer tick");
+//!             transition!(LedOn)
+//!         }
 //!             _ => ignored!()
 //!         }
 //!     }
@@ -156,7 +165,7 @@
 //!#         TryRecvError::Disconnected => panic!("Disconnected"),
 //!#     })
 //!# }
-//!
+//!#
 //!# // Panics if the seies of events comming out of the state machine does not match to expectations
 //!# fn assert_eq_sm_output(receiver:  &Receiver<String>, expectations: &[&str]) {
 //!#     for (index, &expectation) in expectations.iter().enumerate() {
@@ -189,16 +198,19 @@
 //!    
 //!    // Execute the topmost initial transition of the state machine, leading to S11 state
 //!    let mut sm = ism.init();
-//!    assert_eq_sm_output(&receiver, &["TOP_INIT", "S1-ENTRY", "S1-INIT", "S11-ENTRY"]);
+//!    assert_eq_sm_output(&receiver, &["Starting HSM"]);
 //!     
-//!     // Dispatch event A to the HSM in S11 state. Event is ignored in S11 and handled by the
-//!     // parent state S1.
-//!    sm.dispatch(&BasicEvt::A);
-//!    assert_eq_sm_output(&receiver, &["S1-HANDLES-A"]);
+//!    sm.dispatch(&BasicEvt::ButtonPressed);
+//!    assert_eq_sm_output(&receiver, &["Button pressed", "Arm timer","Led turned on"]);
 //!    
-//!    // Dispatch event B to the HSM in S11 state, provoking a transition to S12 state
-//!    sm.dispatch(&BasicEvt::B);
-//!    assert_eq_sm_output(&receiver, &["S11-HANDLES-B", "S11-EXIT", "S12-ENTRY"]);
+//!    sm.dispatch(&BasicEvt::TimerTick);
+//!    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned off"]);
+//!
+//!    sm.dispatch(&BasicEvt::TimerTick);
+//!    assert_eq_sm_output(&receiver, &["Timer tick", "Led turned on"]);
+//!
+//!    sm.dispatch(&BasicEvt::ButtonReleased);
+//!    assert_eq_sm_output(&receiver, &["Button released","Led turned off", "Disarm timer"]);
 //!```
 //! ## Cargo commands index
 //! The present directory must be `kaori_hsm/kaori_hsm` to run every cargo command.
@@ -218,6 +230,16 @@
 //! ```shell
 //! cargo run --example [example_name]
 //! ```
+//! 
+//! ## License
+//! 
+//! Licensed under either of
+//! 
+//! - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+//!   http://www.apache.org/licenses/LICENSE-2.0)
+//! - MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+//! 
+//! at your option.
 
 #![no_std]
 mod init_state_machine;
