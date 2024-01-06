@@ -26,7 +26,7 @@ impl BasicStateMachine {
     }
 }
 
-impl ProtoStateMachine for BasicStateMachine {
+impl TopState for BasicStateMachine {
     type Evt = BasicEvt;
 
     fn init(&mut self) -> InitResult<Self> {

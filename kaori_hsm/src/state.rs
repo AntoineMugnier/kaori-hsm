@@ -1,5 +1,10 @@
-use crate::proto_state_machine::ProtoStateMachine;
+use crate::proto_state_machine::TopState;
 
+#[allow(unused_imports)]
+use crate::state_machine::StateMachine;
+
+// These subsitute types are used to prevent exploding program size
+// induced by the user types which propagate in the original types.
 pub(crate) mod denatured {
 
     pub struct OpaqueType {}
@@ -46,16 +51,19 @@ pub(crate) mod denatured {
 
 pub type StateFn<UserStateMachineT> = fn(
     &mut UserStateMachineT,
-    &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>,
+    &CoreEvt<<UserStateMachineT as TopState>::Evt>,
 ) -> CoreHandleResult<UserStateMachineT>;
 
-pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
+/// Returned by the user-defined [`State::handle()`] method to order the state machine to either
+/// ignore the event and dispatch it to the parent state (`Ignored`), do nothing special (`Handled`),
+/// or trigger a transition to another state (`Transition`).
+pub enum HandleResult<UserStateMachineT: TopState + ?Sized> {
     Ignored,
     Handled,
     Transition(StateFn<UserStateMachineT>),
 }
 
-pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
+pub enum CoreHandleResult<UserStateMachineT: TopState + ?Sized> {
     Ignored(ParentState<UserStateMachineT>),
     Handled,
     Transition(StateFn<UserStateMachineT>),
@@ -63,12 +71,18 @@ pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
     InitResult(InitResult<UserStateMachineT>),
 }
 
-pub enum ParentState<UserStateMachine: ProtoStateMachine + ?Sized> {
+/// Returned by the user-defined [`State::get_parent_state()`] method to either indicate
+/// if the parent of the present state is the top state (`TopReached`), or another user-defined
+/// state (`Exists`).
+pub enum ParentState<UserStateMachine: TopState + ?Sized> {
     TopReached,
     Exists(StateFn<UserStateMachine>),
 }
 
-pub enum InitResult<UserStateMachine: ProtoStateMachine + ?Sized> {
+/// Returned by the [`TopState::init()`] and [`State::init()`] methods to indicate
+/// the target state of an intial transition. The method [`State::init()`] must remain undefined
+/// for every leaf state and in this case, the default implementation returns `NotImplemented`.
+pub enum InitResult<UserStateMachine: TopState + ?Sized> {
     NotImplemented,
     TargetState(StateFn<UserStateMachine>),
 }
@@ -101,7 +115,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 ///# }
 ///#
 ///#
-///# impl ProtoStateMachine for BasicStateMachine{
+///# impl TopState for BasicStateMachine{
 ///#   type Evt = BasicEvt;
 ///#
 ///#   fn init(&mut self) -> InitResult<Self> {
@@ -167,7 +181,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 /// in order to limit code verbosity.*
 pub trait State<Tag>
 where
-    Self: ProtoStateMachine,
+    Self: TopState,
 {
     /// Return the parent state of this state, which can be either
     /// the `top` state or another user-defined state.
@@ -178,12 +192,13 @@ where
     /// *Note: This method is automatically implemented if you use the `#[state()]` procedural macro*
     fn get_parent_state() -> ParentState<Self>;
 
-    /// Initial transition of the state. Is called during a transition targeting the present state, after its entry statement has been executed.
+    /// Define the operations to perform when the initial transition of a state is triggered.
+    /// Is called when a transition targets the present state, after its entry statement has been executed.
     ///
     ///# Implementation policy
-    /// The default implementation is mandatory for leaf states.
-    /// All non-leaf state must implement this method.
-    /// The implemented method must return only the `TargetState` variant of the enum `InitResult` containing the target substate.
+    /// Leaving the default implementation is mandatory for all leaf states (states without children) but
+    /// all non-leaf state must implement this method.
+    /// The implemented method must return only `TargetState::InitResult` variant containing the target substate.  
     /// *Note: It is recommended to use the `ìnit_transition!()` macro for returning the target
     /// substate.*
     fn init(&mut self) -> InitResult<Self> {
@@ -192,7 +207,7 @@ where
 
     /// Executed when the state machine enters the present state during a transition.
     ///# Implementation policy
-    /// The implementation of this method is optional
+    /// The implementation of this method is optional.
     ///
     fn entry(&mut self) {
         // No implementation
@@ -201,31 +216,30 @@ where
     /// Executed when the state machine exits the present state during a transition.
     ///
     ///# Implementation policy
-    /// The implementation of this method is optional
+    /// The implementation of this method is optional.
     fn exit(&mut self) {
         // No implementation
     }
 
-    /// Events injected into the state machine through the `StateMachine::dispatch()` method are
+    /// Events injected into the state machine through the [`StateMachine::dispatch()`] method are
     /// received by this method if the present state is the current state of the state machine.
     ///  
     /// # Implementation policy
     /// No default implementation, must be implemented for every state.
-    /// This method implementation is typically a `match` statement on the event variant. The handling of each event may return either:
-    /// - [`HandleResult::Transition`]: immediately trigger a transition to the target state, which may
+    /// This method implementation is typically a `match` statement on the event variant.
+    /// The handling of each event may return either:
+    /// - [`HandleResult::Transition`]: Immediately trigger a transition to the target state, which may
     /// become the next current state of the state machine.
-    /// - [`HandleResult::Handled`]: The event is handled without transition
-    ///
-    /// In the case the event does not match any expected event, `HandleResult::Ignored` must be
-    /// returned. In this case, [`State::handle()`] methods of upper states will be called with the ignored
-    /// event.
-    // *Note: Its is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead of assembling manually the enum variant of `HandleResult`*
-    fn handle(&mut self, evt: &<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
+    /// - [`HandleResult::Handled`]: The event is handled without transition.
+    /// - [`HandleResult::Ignored`]: the event is dispatched to the parent state.  
+    /// *Note: It is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead
+    /// of assembling manually the enum variants of `HandleResult`*
+    fn handle(&mut self, evt: &<Self as TopState>::Evt) -> HandleResult<Self>;
 
     #[doc(hidden)]
     fn core_handle(
         &mut self,
-        evt: &CoreEvt<<Self as ProtoStateMachine>::Evt>,
+        evt: &CoreEvt<<Self as TopState>::Evt>,
     ) -> CoreHandleResult<Self> {
         match evt {
             CoreEvt::InitEvt => {

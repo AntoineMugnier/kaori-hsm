@@ -1,16 +1,16 @@
-pub use crate::state::{CoreHandleResult, HandleResult, InitResult, ParentState, State};
-pub use crate::StateMachine;
-
 //For doc
 #[allow(unused_imports)]
-use crate::InitStateMachine;
+use crate::{
+    state::{CoreHandleResult, HandleResult, InitResult, ParentState, State},
+    InitStateMachine, StateMachine,
+};
 
-/// Define the initial pseudostate and the type of event variant the state machine can receive
+/// Define the initial pseudostate and the type of event variant the state machine can receive.
 /// # Example
 ///```rust
 ///# use kaori_hsm::*;
 /// enum BasicEvt{
-/// A{counter: u8},
+/// A,
 /// B,
 /// C
 /// }
@@ -23,8 +23,8 @@ use crate::InitStateMachine;
 ///#
 ///#     fn handle(&mut self, evt: & BasicEvt) -> HandleResult<Self> {
 ///#         match evt{
-///#             BasicEvt::A{counter} => {
-///#               println!("counter: {}", counter);
+///#             BasicEvt::A => {
+///#               println!("S0-HANDLES-A");
 ///#               handled!()
 ///#             },
 ///#             _ => ignored!()
@@ -32,7 +32,7 @@ use crate::InitStateMachine;
 ///#     }    
 ///# }
 ///
-/// impl ProtoStateMachine for BasicStateMachine{
+/// impl TopState for BasicStateMachine{
 ///   type Evt = BasicEvt;
 ///
 ///   fn init(&mut self) -> InitResult<Self> {
@@ -41,14 +41,18 @@ use crate::InitStateMachine;
 ///   }
 /// }
 ///```
-pub trait ProtoStateMachine {
-    /// Type that must be implemented by the user in order to define the events that can be handled
-    /// by the state machine. Should be defined as an enum with each variants defining a unique
-    /// event type. The [`State<tag>::handle()`] and the [`StateMachine::dispatch()`] methods of the state machine accept the type `Evt` as argument.
+pub trait TopState {
+    /// Type that must be defined as an enum by the user in order to define the events which can be handled
+    /// by the state machine. The [`State<tag>::handle()`] and the [`StateMachine::dispatch()`] methods of
+    /// the state machine accept the type `Evt` as argument.
     type Evt;
 
-    /// Initial pseudostate whose role is to initialize the state machine and lead to its
-    /// default state. This method call is triggered by the call to [`InitStateMachine::init()`]
-    /// Usually, in the implementation of this method, the user sets up internal objects used by the state machine.
+    /// First user code to execute during the lifetime of the state machine.
+    /// Executing only once, this method allows the user to execute some custom code before
+    /// returning the first state to which the state machine will transition.
+    /// This method execution is triggered by the call to [`InitStateMachine::init()`].
+    /// # Implementation policy
+    /// The user must implement this method and return a state which has the top state as its
+    /// parent.  
     fn init(&mut self) -> InitResult<Self>;
 }

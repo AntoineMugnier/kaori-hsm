@@ -1,5 +1,5 @@
 use kaori_hsm::*;
-
+/// Example
 // Evt definition
 enum BasicEvt {
     A,
@@ -10,7 +10,7 @@ struct BasicStateMachine {}
 
 //type BasicStateMachine = StateMachine<BasicData, BasicEvt>;
 
-impl ProtoStateMachine for BasicStateMachine {
+impl TopState for BasicStateMachine {
     type Evt = BasicEvt;
 
     fn init(&mut self) -> InitResult<Self> {
