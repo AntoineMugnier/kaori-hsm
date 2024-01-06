@@ -32,7 +32,7 @@ use crate::{
 ///#     }    
 ///# }
 ///
-/// impl ProtoStateMachine for BasicStateMachine{
+/// impl TopState for BasicStateMachine{
 ///   type Evt = BasicEvt;
 ///
 ///   fn init(&mut self) -> InitResult<Self> {
@@ -41,7 +41,7 @@ use crate::{
 ///   }
 /// }
 ///```
-pub trait ProtoStateMachine {
+pub trait TopState {
     /// Type that must be defined as an enum by the user in order to define the events which can be handled
     /// by the state machine. The [`State<tag>::handle()`] and the [`StateMachine::dispatch()`] methods of
     /// the state machine accept the type `Evt` as argument.

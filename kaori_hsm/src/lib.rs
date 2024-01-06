@@ -21,7 +21,7 @@
 //!
 //! ## How to use the library ?
 //! To build your own state machine, you first have to define the structure that will hold its
-//! data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
+//! data and then you will need to implement the following traits of the library on it: the [`TopState`]
 //! trait and as many variants of the [`State<Tag>`] trait as you want to define states.
 //!
 //! The following sequence has to be followed in order to build an operational state machine:
@@ -78,7 +78,7 @@
 //!     }
 //! }
 //!
-//! impl ProtoStateMachine for BasicStateMachine{
+//! impl TopState for BasicStateMachine{
 //!   type Evt = BlinkingEvent;
 //!
 //!   fn init(&mut self) -> InitResult<Self> {
@@ -256,14 +256,14 @@ mod sm_business_logic;
 mod state;
 mod state_machine;
 pub use init_state_machine::InitStateMachine;
-pub use proto_state_machine::ProtoStateMachine;
+pub use proto_state_machine::TopState;
 pub use state::{HandleResult, InitResult, ParentState, State};
 pub use state_machine::StateMachine;
 extern crate kaori_hsm_derive;
 pub use kaori_hsm_derive::state;
 
 /// Sugar for constructing a `InitResult::TargetState` enum variant containing the target of the
-/// initial transition. Can be either used in [`ProtoStateMachine::init`] or [`State<Tag>::init`]
+/// initial transition. Can be either used in [`TopState::init`] or [`State<Tag>::init`]
 /// # Example
 /// ```
 ///# use kaori_hsm::*;
@@ -273,7 +273,7 @@ pub use kaori_hsm_derive::state;
 ///# }
 ///#
 ///#
-/// impl ProtoStateMachine for BasicStateMachine{
+/// impl TopState for BasicStateMachine{
 ///   type Evt = BasicEvt;
 ///
 ///   fn init(&mut self) -> InitResult<Self> {
@@ -324,7 +324,7 @@ macro_rules! init_transition {
 ///# }
 ///#
 ///#
-///# impl ProtoStateMachine for BasicStateMachine{
+///# impl TopState for BasicStateMachine{
 ///#   type Evt = BasicEvt;
 ///#
 ///#   fn init(&mut self) -> InitResult<Self> {
@@ -371,7 +371,7 @@ macro_rules! transition {
 ///# }
 ///#
 ///#
-///# impl ProtoStateMachine for BasicStateMachine{
+///# impl TopState for BasicStateMachine{
 ///#   type Evt = BasicEvt;
 ///#
 ///#   fn init(&mut self) -> InitResult<Self> {
@@ -406,7 +406,7 @@ macro_rules! ignored {
 ///# }
 ///#
 ///#
-///# impl ProtoStateMachine for BasicStateMachine{
+///# impl TopState for BasicStateMachine{
 ///#   type Evt = BasicEvt;
 ///#
 ///#   fn init(&mut self) -> InitResult<Self> {

@@ -1,4 +1,4 @@
-use crate::proto_state_machine::ProtoStateMachine;
+use crate::proto_state_machine::TopState;
 
 #[allow(unused_imports)]
 use crate::state_machine::StateMachine;
@@ -51,19 +51,19 @@ pub(crate) mod denatured {
 
 pub type StateFn<UserStateMachineT> = fn(
     &mut UserStateMachineT,
-    &CoreEvt<<UserStateMachineT as ProtoStateMachine>::Evt>,
+    &CoreEvt<<UserStateMachineT as TopState>::Evt>,
 ) -> CoreHandleResult<UserStateMachineT>;
 
 /// Returned by the user-defined [`State::handle()`] method to order the state machine to either
 /// ignore the event and dispatch it to the parent state (`Ignored`), do nothing special (`Handled`),
 /// or trigger a transition to another state (`Transition`).
-pub enum HandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
+pub enum HandleResult<UserStateMachineT: TopState + ?Sized> {
     Ignored,
     Handled,
     Transition(StateFn<UserStateMachineT>),
 }
 
-pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
+pub enum CoreHandleResult<UserStateMachineT: TopState + ?Sized> {
     Ignored(ParentState<UserStateMachineT>),
     Handled,
     Transition(StateFn<UserStateMachineT>),
@@ -74,15 +74,15 @@ pub enum CoreHandleResult<UserStateMachineT: ProtoStateMachine + ?Sized> {
 /// Returned by the user-defined [`State::get_parent_state()`] method to either indicate
 /// if the parent of the present state is the top state (`TopReached`), or another user-defined
 /// state (`Exists`).
-pub enum ParentState<UserStateMachine: ProtoStateMachine + ?Sized> {
+pub enum ParentState<UserStateMachine: TopState + ?Sized> {
     TopReached,
     Exists(StateFn<UserStateMachine>),
 }
 
-/// Returned by the [`ProtoStateMachine::init()`] and [`State::init()`] methods to indicate
+/// Returned by the [`TopState::init()`] and [`State::init()`] methods to indicate
 /// the target state of an intial transition. The method [`State::init()`] must remain undefined
 /// for every leaf state and in this case, the default implementation returns `NotImplemented`.
-pub enum InitResult<UserStateMachine: ProtoStateMachine + ?Sized> {
+pub enum InitResult<UserStateMachine: TopState + ?Sized> {
     NotImplemented,
     TargetState(StateFn<UserStateMachine>),
 }
@@ -115,7 +115,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 ///# }
 ///#
 ///#
-///# impl ProtoStateMachine for BasicStateMachine{
+///# impl TopState for BasicStateMachine{
 ///#   type Evt = BasicEvt;
 ///#
 ///#   fn init(&mut self) -> InitResult<Self> {
@@ -181,7 +181,7 @@ pub enum CoreEvt<'a, UserEvtT> {
 /// in order to limit code verbosity.*
 pub trait State<Tag>
 where
-    Self: ProtoStateMachine,
+    Self: TopState,
 {
     /// Return the parent state of this state, which can be either
     /// the `top` state or another user-defined state.
@@ -234,12 +234,12 @@ where
     /// - [`HandleResult::Ignored`]: the event is dispatched to the parent state.  
     /// *Note: It is recommended to use the provided `transition!()`, `handled!()` and `ignored!()` macros instead
     /// of assembling manually the enum variants of `HandleResult`*
-    fn handle(&mut self, evt: &<Self as ProtoStateMachine>::Evt) -> HandleResult<Self>;
+    fn handle(&mut self, evt: &<Self as TopState>::Evt) -> HandleResult<Self>;
 
     #[doc(hidden)]
     fn core_handle(
         &mut self,
-        evt: &CoreEvt<<Self as ProtoStateMachine>::Evt>,
+        evt: &CoreEvt<<Self as TopState>::Evt>,
     ) -> CoreHandleResult<Self> {
         match evt {
             CoreEvt::InitEvt => {

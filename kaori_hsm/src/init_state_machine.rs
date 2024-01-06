@@ -1,4 +1,4 @@
-use crate::proto_state_machine::ProtoStateMachine;
+use crate::proto_state_machine::TopState;
 use crate::{sm_business_logic::SMBusinessLogic, StateMachine};
 
 //For doc
@@ -7,20 +7,20 @@ use crate::state::State;
 
 /// Represent a precursor to a state machine, waiting to be initialized.
 /// Built using [`InitStateMachine::from()`] from an instance of a  user-defined structure
-/// on which has been implemented the [`ProtoStateMachine`] and [`State`] traits.
-pub struct InitStateMachine<UserStateMachine: ProtoStateMachine> {
+/// on which has been implemented the [`TopState`] and [`State`] traits.
+pub struct InitStateMachine<UserStateMachine: TopState> {
     user_state_machine: UserStateMachine,
 }
 
-impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
+impl<UserStateMachine: TopState> InitStateMachine<UserStateMachine> {
     /// Build the precursor state machine from you structure which implements the
-    /// `ProtoStateMachine` trait and as many variants of the [`State<tag>`] trait as
+    /// `TopState` trait and as many variants of the [`State<tag>`] trait as
     /// you have states.
     pub fn from(user_state_machine: UserStateMachine) -> InitStateMachine<UserStateMachine> {
         InitStateMachine { user_state_machine }
     }
 
-    /// Consume the structure instance, triggerring the call to [`ProtoStateMachine::init()`] and
+    /// Consume the structure instance, triggerring the call to [`TopState::init()`] and
     /// performing transition to the first state. A fully operational state machine
     /// is returned.   
     pub fn init(mut self) -> StateMachine<UserStateMachine> {
@@ -41,4 +41,4 @@ impl<UserStateMachine: ProtoStateMachine> InitStateMachine<UserStateMachine> {
     }
 }
 
-impl<UserStateMachine: ProtoStateMachine> SMBusinessLogic for InitStateMachine<UserStateMachine> {}
+impl<UserStateMachine: TopState> SMBusinessLogic for InitStateMachine<UserStateMachine> {}

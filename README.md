@@ -23,7 +23,7 @@ made by Miro Samek that you can find [here](https://youtube.com/playlist?list=PL
 
 ### How to use the library ?
 To build your own state machine, you first have to define the structure that will hold its
-data and then you will need to implement the following traits of the library on it: the [`ProtoStateMachine`]
+data and then you will need to implement the following traits of the library on it: the [`TopState`]
 trait and as many variants of the [`State<Tag>`] trait as you want to define states.
 
 The following sequence has to be followed in order to build an operational state machine:
@@ -80,7 +80,7 @@ impl BasicStateMachine{
     }
 }
 
-impl ProtoStateMachine for BasicStateMachine{
+impl TopState for BasicStateMachine{
   type Evt = BlinkingEvent;
 
   fn init(&mut self) -> InitResult<Self> {
@@ -164,8 +164,6 @@ impl State<LedOff> for BasicStateMachine{
     }
 }
 
-#
-#
 
    let (sender, mut receiver) = channel();
 
