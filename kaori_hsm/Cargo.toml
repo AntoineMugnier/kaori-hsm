@@ -9,7 +9,7 @@ categories = ['embedded', "no-std"]
 description = "A performant hierarchical state machine library"
 keywords = ["statechart", "event-driven", "hsm", "state-machine", "embedded"]
 license = "MIT OR Apache-2.0"
-readme = "README.md"
+readme = "../README.md"
 
 [dependencies]
 kaori-hsm-derive= {path = "../kaori_hsm_derive/"}

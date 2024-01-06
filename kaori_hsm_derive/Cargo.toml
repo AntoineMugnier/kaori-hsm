@@ -9,7 +9,7 @@ categories = ['embedded', "no-std"]
 description = "Macros for the kaori-hsm crate"
 keywords = ["statechart", "event-driven", "hsm", "state-machine", "embedded"]
 license = "MIT OR Apache-2.0"
-readme = "README.md"
+readme = "../README.md"
 
 [lib]
 proc-macro = true
