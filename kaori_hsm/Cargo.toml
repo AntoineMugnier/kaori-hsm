@@ -1,6 +1,6 @@
 [package]
 name = "kaori-hsm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Antoine Mugnier <amugnier@europe.com>"]
 repository= "https://github.com/AntoineMugnier/kaori-hsm"
@@ -10,9 +10,10 @@ description = "A performant hierarchical state machine library"
 keywords = ["statechart", "event-driven", "hsm", "state-machine", "embedded"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
+rust-version = "1.70"
 
 [dependencies]
-kaori-hsm-derive= "0.1.0"
+kaori-hsm-derive= "0.1.1"
 
 [dev-dependencies]
 rand = "0.8.5"
